@@ -1,0 +1,16 @@
+# Verilator / build artifacts
+**/obj_dir/
+**/sim_build/
+*.o
+*.d
+*.a
+*.gch
+
+# Logs
+*.log
+
+# Editor / OS
+*.swp
+*~
+.DS_Store
+Thumbs.db
