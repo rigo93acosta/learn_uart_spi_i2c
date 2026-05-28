@@ -37,6 +37,8 @@ make SIM=verilator TEST=test_uart_uvm
 
 Or: `./scripts/module4.sh --run`
 
+- **Slides & video**: [slides.pptx](../media/module4/slides.pptx) · [slides.pdf](../media/module4/slides.pdf) · [video.mp4](../media/module4/video.mp4) — regenerate: `./scripts/build_all_media.sh --module 4`
+
 ---
 
 ## Overview

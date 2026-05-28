@@ -34,6 +34,8 @@ Or use the module script:
 ./scripts/module1.sh --run
 ```
 
+- **Slides & video**: [slides.pptx](../media/module1/slides.pptx) · [slides.pdf](../media/module1/slides.pdf) · [video.mp4](../media/module1/video.mp4) — regenerate: `./scripts/build_all_media.sh --module 1`
+
 ---
 
 ## Overview

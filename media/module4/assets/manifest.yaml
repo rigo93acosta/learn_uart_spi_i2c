@@ -1,0 +1,27 @@
+module: 4
+course: learn_uart_spi_i2c
+assets:
+- id: learning_path
+  type: diagram
+  file: assets/diagrams/learning_path.png
+  source: assets/diagrams/learning_path.mmd
+  generator: render_diagrams.sh
+  slides:
+  - 4
+  license: learn_uart_spi_i2c course materials
+- id: module4_check
+  type: screenshot
+  file: assets/screenshots/module4_check.png
+  capture_command: ./scripts/module4.sh --check
+  cwd: .
+  slides:
+  - 11
+  expect_stdout_contains: All required checks for Module 4 passed
+- id: ex01_uart_uvm
+  type: screenshot
+  file: assets/screenshots/ex01_uart_uvm.png
+  capture_command: ./scripts/module4.sh --run
+  cwd: .
+  slides:
+  - 13
+  expect_stdout_contains: SCOREBOARD

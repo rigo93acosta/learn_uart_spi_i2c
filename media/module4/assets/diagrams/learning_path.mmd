@@ -1,0 +1,7 @@
+flowchart LR
+  T1["UART UVM Agent"]
+  T2["Loopback and RX Check"]
+  T1 --> T2
+  T3["Toolchain"]
+  T2 --> T3
+  T3 --> N["SPI"]

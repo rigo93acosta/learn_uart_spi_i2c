@@ -37,6 +37,8 @@ make SIM=verilator TEST=test_i2c_uvm
 
 Or: `./scripts/module8.sh --run`
 
+- **Slides & video**: [slides.pptx](../media/module8/slides.pptx) · [slides.pdf](../media/module8/slides.pdf) · [video.mp4](../media/module8/video.mp4) — regenerate: `./scripts/build_all_media.sh --module 8`
+
 ---
 
 ## Overview

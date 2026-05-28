@@ -51,6 +51,7 @@ This project is a complete educational path for learning digital design and veri
 - ✅ **Verilator + UVM 2017**: Open-source toolchain; UVM library under `tools/uvm-2017/`
 - ✅ **Scripts**: `scripts/moduleN.sh --run` (and `--check`) for running examples from repo root
 - ✅ **Documentation**: SPEC.md-style specs, walkthroughs, and module docs with topics and run instructions
+- ✅ **Slides & video**: Per-module `slides.pptx`, `slides.pdf`, and `video.mp4` under `media/` (see `./scripts/build_all_media.sh`)
 
 ## 📚 Prerequisites
 
@@ -111,6 +112,17 @@ Or: `./scripts/module4.sh --run`
 
 Start with [Module 1: Design & Verification Methodology (Part 1)](docs/MODULE1.md) and proceed through the modules. Each module doc has run instructions and links to its examples.
 
+### 6. Slides & video (optional)
+
+Pre-built decks live under `media/moduleN/`. To regenerate all modules:
+
+```bash
+./scripts/build_all_media.sh --regenerate-outlines   # first time
+./scripts/build_all_media.sh                         # build pptx, pdf, video
+```
+
+See [media/README.md](media/README.md) and [media/INDEX.md](media/INDEX.md). Requires the Cursor skill `module-to-slides-video` and **Verilator** for live simulation screenshots.
+
 ## 📁 Project Structure
 
 ```
@@ -136,9 +148,14 @@ spi_i2c_uart/
 │   └── ...
 ├── module2/ … module8/       # Same layout: README.md, EXAMPLES.md, examples/
 │
-├── scripts/                   # Per-module run/check scripts
+├── scripts/                   # Per-module run/check scripts + media build
 │   ├── module1.sh … module8.sh
-│   └── ...
+│   ├── build_all_media.sh     # Build all module decks + PDF + video
+│   └── verify_all_media.sh
+│
+├── media/                     # Slides, PDF, video per module (see media/INDEX.md)
+│   ├── module1/ … module8/
+│   └── outline_overrides.yaml # Demo command/expect overrides for slide generator
 │
 ├── tools/                     # UVM 2017, learn_unix_git, etc.
 │   ├── uvm-2017/              # UVM 2017 library

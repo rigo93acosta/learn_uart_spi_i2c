@@ -1,0 +1,7 @@
+flowchart LR
+  T1["SPI Protocol (Mode 0)"]
+  T2["RTL Architecture"]
+  T1 --> T2
+  T3["Basic Testbench"]
+  T2 --> T3
+  T3 --> N["SPI UVM+SV"]

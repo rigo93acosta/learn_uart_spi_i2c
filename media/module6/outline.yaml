@@ -1,0 +1,108 @@
+title: Module 6 — SPI — UVM+SV Verification
+course: learn_uart_spi_i2c
+module: 6
+subtitle: Extend SPI verification to **UVM+SV** — SPI agent (transaction, sequence,
+  driver, monitor, scoreboard); run on Verilator.
+footer: learn_uart_spi_i2c / Module 6
+slides:
+- type: title
+  title: Module 6
+  subtitle: SPI — UVM+SV Verification
+- type: bullets
+  title: Learning objectives
+  bullets:
+  - 'SPI UVM agent: Transaction (SpiTransaction), sequence (SpiSequence), driver (SpiDriver),
+    monitor (SpiMonitor), scoreboard (SpiScoreboard).'
+  - 'Interface: spi_master_if (clk, rst_n, clk_div_tick, start, data_in, sclk, mosi,
+    cs_n, busy, done) connects UVM to DUT.'
+  - 'Mode 0 monitoring: SCLK idle low; capture on rising edge; monitor samples MOSI
+    on each rising SCLK, MSB first, to reconstruct the byte.'
+- type: bullets
+  title: Prerequisites
+  bullets:
+  - Module 1 (spec → RTL), Module 2 (UVM+SV, uvm_smoke), Module 5 (SPI protocol +
+    RTL + basic TB).
+  - Verilator, Make, C++ compiler, UVM (UVM_HOME or vendored UVM).
+- type: image
+  title: Learning path
+  image: assets/diagrams/learning_path.png
+  caption: Extend SPI verification to **UVM+SV** — SPI agent (transaction, sequence,
+    driver, monitor, scoreboard); run on Verilator.
+- type: bullets
+  title: Overview
+  bullets:
+  - 'Module 6 builds on Module 5 (SPI protocol + RTL + basic testbench):'
+- type: section
+  title: Syllabus topics
+- type: bullets
+  title: 1. SPI UVM Agent
+  bullets:
+  - 'Transaction (SpiTransaction): byte to send (data); monitor fills observed_mosi
+    (reconstructed from MOSI on SCLK).'
+  - 'Sequence (SpiSequence): produces directed transactions (0x00, 0x01, 0x55, 0xAA,
+    0xFF).'
+  - 'Driver (SpiDriver): gets transaction, drives start and data_in for one cycle,
+    waits for done.'
+  - 'Monitor (SpiMonitor): watches cs_n; when cs_n goes low, samples MOSI on each
+    rising edge of SCLK (mode 0, MSB first), writes transaction...'
+  - 'Scoreboard (SpiScoreboard): compares expected (from test) vs observed_mosi (from
+    monitor).'
+  notes: From MODULE6 Topics Covered.
+- type: bullets
+  title: 2. Mode 0 Timing
+  bullets:
+  - 'SPI mode 0: SCLK idles low; data captured on rising edge; data changed on falling
+    edge.'
+  - 'Monitor: Waits for cs_n low, then on 8 rising edges of SCLK captures MOSI into
+    bits [7:0] (MSB first).'
+  notes: From MODULE6 Topics Covered.
+- type: bullets
+  title: 3. Toolchain
+  bullets:
+  - 'Same as Module 2: Verilator with -sv, --timing, --trace, UVM include paths, make
+    SIM=verilator TEST=test_spi_uvm. Run with...'
+  notes: From MODULE6 Topics Covered.
+- type: section
+  title: Hands-on examples
+- type: demo
+  title: Module 6 self-check
+  command: ./scripts/module6.sh --check
+  screenshot: assets/screenshots/module6_check.png
+  expect_stdout_contains: All required checks for Module 6 passed
+  notes: Run from course repository root.
+- type: bullets
+  title: 'Example 1: SPI UVM'
+  bullets:
+  - UVM phases and reporting (DRIVER, MONITOR, SCOREBOARD).
+  - Scoreboard checks (expected byte from sequence vs observed byte on MOSI).
+  - Final scoreboard summary (matches and mismatches).
+  notes: module6/examples/spi_uvm/README.md
+- type: demo
+  title: 'Demo: SPI UVM'
+  command: ./scripts/module6.sh --run
+  screenshot: assets/screenshots/ex01_spi_uvm.png
+  notes: 'Hands-on: module6/examples/spi_uvm/'
+  expect_stdout_contains: SCOREBOARD
+- type: section
+  title: Practice & assessment
+- type: bullets
+  title: Exercises
+  bullets:
+  - Run spi_uvm
+  - Trace one transaction
+  - Change the sequence
+  - 'Optional: Compare to UART UVM'
+- type: bullets
+  title: Assessment checklist
+  bullets:
+  - Can describe the SPI UVM agent and how it maps to SPI (one byte, mode 0 monitoring).
+  - Can run spi_uvm and interpret UVM output.
+  - 'Ready for Module 7: I²C protocol + RTL + basic testbench.'
+- type: bullets
+  title: Summary & next steps
+  bullets:
+  - Extend SPI verification to **UVM+SV** — SPI agent (transaction, sequence, driver,
+    monitor, scoreboard); run on Verilator.
+  - Complete module6/CHECKLIST.md
+  - Run ./scripts/module6.sh --check
+  - 'Next: I²C'

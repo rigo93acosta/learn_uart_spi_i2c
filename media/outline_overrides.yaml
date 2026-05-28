@@ -1,0 +1,50 @@
+# Per-module demo overrides for generate_outline_from_module.py
+# Keys under demos: example folder from EXAMPLES.md backtick path (e.g. examples/spec_to_rtl).
+
+module1:
+  demos:
+    examples/spec_to_rtl:
+      command: "cd module1/examples/spec_to_rtl && make run"
+      expect: "[PASS] spec_to_rtl"
+
+module2:
+  demos:
+    examples/uvm_smoke:
+      command: "./scripts/module2.sh --run"
+      expect: "SCOREBOARD"
+
+module3:
+  demos:
+    examples/uart_baseline:
+      command: "./scripts/module3.sh --run"
+      expect: "UART baseline test PASS"
+
+module4:
+  demos:
+    examples/uart_uvm:
+      command: "./scripts/module4.sh --run"
+      expect: "SCOREBOARD"
+
+module5:
+  demos:
+    examples/spi_baseline:
+      command: "./scripts/module5.sh --run"
+      expect: "SPI baseline test PASS"
+
+module6:
+  demos:
+    examples/spi_uvm:
+      command: "./scripts/module6.sh --run"
+      expect: "SCOREBOARD"
+
+module7:
+  demos:
+    examples/i2c_baseline:
+      command: "./scripts/module7.sh --run"
+      expect: "I2C baseline test PASS"
+
+module8:
+  demos:
+    examples/i2c_uvm:
+      command: "./scripts/module8.sh --run"
+      expect: "SCOREBOARD"

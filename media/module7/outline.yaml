@@ -1,0 +1,113 @@
+title: Module 7 — I²C — Protocol + RTL + Basic Testbench
+course: learn_uart_spi_i2c
+module: 7
+subtitle: Understand the I²C protocol (start/stop, addressing, ACK/NACK), translate
+  it to RTL (simple master + timing), and verify with a **basic** (non-UVM) directed
+  testbench.
+footer: learn_uart_spi_i2c / Module 7
+slides:
+- type: title
+  title: Module 7
+  subtitle: I²C — Protocol + RTL + Basic Testbench
+- type: bullets
+  title: Learning objectives
+  bullets:
+  - How START/STOP are detected/produced (SDA transitions while SCL high).
+  - How the address + R/W bit and data bytes are serialized on SDA.
+  - How to build a basic “bus monitor” that reconstructs bytes by sampling SDA on
+    SCL rising edges.
+- type: bullets
+  title: Prerequisites
+  bullets:
+  - Modules 1–6.
+  - Verilator, Make, C++ compiler. No UVM required for this baseline.
+- type: image
+  title: Learning path
+  image: assets/diagrams/learning_path.png
+  caption: Understand the I²C protocol (start/stop, addressing, ACK/NACK), translate
+    it to RTL (simple master + timing), and verify with a **basic** (non-UVM) directed
+    testbench.
+- type: bullets
+  title: Overview
+  bullets:
+  - Module 7 is the I²C **protocol + RTL + basic testbench** module (UVM comes in
+    Module 8).
+- type: section
+  title: Syllabus topics
+- type: bullets
+  title: 1. I²C Protocol Essentials
+  bullets:
+  - 'Bus idle: SCL=1, SDA=1.'
+  - 'START: SDA goes 1→0 while SCL is 1.'
+  - 'STOP: SDA goes 0→1 while SCL is 1.'
+  - 'Address phase: 7-bit address + R/W bit (0=write, 1=read) sent MSB first.'
+  - 'Data phase: 8-bit data bytes sent MSB first.'
+  - 'ACK/NACK (concept): receiver pulls SDA low for ACK on the 9th clock; high means
+    NACK.'
+  notes: From MODULE7 Topics Covered.
+- type: bullets
+  title: 2. RTL Architecture (Baseline)
+  bullets:
+  - 'clk_div: Divides `clk` to produce `clk_div_tick` used to toggle/advance SCL timing.'
+  - 'i2c_master: State machine that generates:'
+  - START condition
+  - address+W bits
+  - one data byte
+  - STOP condition
+  notes: From MODULE7 Topics Covered.
+- type: bullets
+  title: 3. Basic Testbench
+  bullets:
+  - 'Stimulus: Pulses `start`, sets `addr` and `data_in`, waits for `done`.'
+  - 'Monitor/self-check: Detects START, then samples SDA on each rising edge of SCL
+    to reconstruct:'
+  - 8 bits of address+W
+  - 8 bits of data
+  notes: From MODULE7 Topics Covered.
+- type: section
+  title: Hands-on examples
+- type: demo
+  title: Module 7 self-check
+  command: ./scripts/module7.sh --check
+  screenshot: assets/screenshots/module7_check.png
+  expect_stdout_contains: All required checks for Module 7 passed
+  notes: Run from course repository root.
+- type: bullets
+  title: 'Example 1: I²C baseline'
+  bullets:
+  - Drives a single write transaction (START → address+W → data → STOP)
+  - Includes a simple bus monitor that samples SDA on SCL rising edges to reconstruct
+    bytes
+  - No UVM
+  notes: module7/examples/i2c_baseline/README.md
+- type: demo
+  title: 'Demo: I²C baseline'
+  command: ./scripts/module7.sh --run
+  screenshot: assets/screenshots/ex01_i2c_baseline.png
+  notes: 'Hands-on: module7/examples/i2c_baseline/'
+  expect_stdout_contains: I2C baseline test PASS
+- type: section
+  title: Practice & assessment
+- type: bullets
+  title: Exercises
+  bullets:
+  - Run i2c_baseline
+  - Trace one transfer
+  - Bus monitor
+  - 'Optional: Waveforms'
+- type: bullets
+  title: Assessment checklist
+  bullets:
+  - Can describe I²C START, STOP, address+R/W, and data phase (and ACK/NACK concept).
+  - Can explain the role of i2c_master and clk_div; know the baseline uses push-pull
+    (simplified).
+  - Can run i2c_baseline and interpret the test result.
+  - 'Ready for Module 8: I²C UVM+SV verification.'
+- type: bullets
+  title: Summary & next steps
+  bullets:
+  - Understand the I²C protocol (start/stop, addressing, ACK/NACK), translate it to
+    RTL (simple master + timing), and verify with a...
+  - Complete module7/CHECKLIST.md
+  - Run ./scripts/module7.sh --check
+  - 'Next: I²C UVM+SV'

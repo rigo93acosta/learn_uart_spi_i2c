@@ -1,0 +1,95 @@
+title: Module 8 — I²C — UVM+SV Verification
+course: learn_uart_spi_i2c
+module: 8
+subtitle: Extend I²C verification to **UVM+SV** — I²C agent (transaction, sequence,
+  driver, monitor, scoreboard); run on Verilator.
+footer: learn_uart_spi_i2c / Module 8
+slides:
+- type: title
+  title: Module 8
+  subtitle: I²C — UVM+SV Verification
+- type: bullets
+  title: Learning objectives
+  bullets:
+  - 'I²C UVM agent: I2cTransaction, I2cSequence, I2cDriver, I2cMonitor, I2cScoreboard.'
+  - 'Interface: i2c_if (clk, rst_n, start, addr, data_in, scl, sda, clk_div_tick,
+    busy, done) connects UVM to DUT.'
+  - How to hook up a UVM monitor and scoreboard to a bus-oriented DUT.
+- type: bullets
+  title: Prerequisites
+  bullets:
+  - Module 7 (I²C protocol + RTL + basic TB).
+  - Verilator, Make, C++ compiler, UVM (UVM_HOME or vendored UVM).
+- type: image
+  title: Learning path
+  image: assets/diagrams/learning_path.png
+  caption: Extend I²C verification to **UVM+SV** — I²C agent (transaction, sequence,
+    driver, monitor, scoreboard); run on Verilator.
+- type: bullets
+  title: Overview
+  bullets:
+  - 'Module 8 builds on Module 7 (I²C protocol + RTL + basic testbench):'
+- type: section
+  title: Syllabus topics
+- type: bullets
+  title: 1. I²C UVM Agent
+  bullets:
+  - 'Transaction (I2cTransaction): address and data to write; monitor fills observed_addr/observed_data.'
+  - 'Sequence (I2cSequence): produces directed transactions (e.g. same addr, different
+    data bytes).'
+  - 'Driver (I2cDriver): gets transaction, drives start/addr/data_in for one cycle,
+    waits for done.'
+  - 'Monitor (I2cMonitor): watches SCL/SDA; after START, samples SDA on rising SCL
+    to reconstruct 8 bits of address+W and 8 bits of data.'
+  - 'Scoreboard (I2cScoreboard): compares expected (from test) vs observed_addr/observed_data.'
+  notes: From MODULE8 Topics Covered.
+- type: bullets
+  title: 2. Toolchain
+  bullets:
+  - 'Same as Module 6 (SPI UVM): Verilator with -sv, --timing, --trace, UVM include
+    paths, `make SIM=verilator TEST=test_i2c_uvm`. Run with...'
+  notes: From MODULE8 Topics Covered.
+- type: section
+  title: Hands-on examples
+- type: demo
+  title: Module 8 self-check
+  command: ./scripts/module8.sh --check
+  screenshot: assets/screenshots/module8_check.png
+  expect_stdout_contains: All required checks for Module 8 passed
+  notes: Run from course repository root.
+- type: bullets
+  title: 'Example 1: I²C UVM'
+  bullets:
+  - UVM phases and reporting (DRIVER, MONITOR, SCOREBOARD).
+  - Scoreboard checks (expected vs observed address+data from the bus).
+  - Final scoreboard summary (matches and mismatches).
+  notes: module8/examples/i2c_uvm/README.md
+- type: demo
+  title: 'Demo: I²C UVM'
+  command: ./scripts/module8.sh --run
+  screenshot: assets/screenshots/ex01_i2c_uvm.png
+  notes: 'Hands-on: module8/examples/i2c_uvm/'
+  expect_stdout_contains: SCOREBOARD
+- type: section
+  title: Practice & assessment
+- type: bullets
+  title: Exercises
+  bullets:
+  - Run i2c_uvm
+  - Trace one transaction
+  - Change the sequence
+  - Compare across protocols
+- type: bullets
+  title: Assessment checklist
+  bullets:
+  - Can describe the I²C UVM agent and how it maps to I²C (addr+data, monitor on SCL/SDA).
+  - Can run i2c_uvm and interpret UVM output.
+  - Can compare UVM structure across UART, SPI, and I²C.
+- type: bullets
+  title: Summary & next steps
+  bullets:
+  - Extend I²C verification to **UVM+SV** — I²C agent (transaction, sequence, driver,
+    monitor, scoreboard); run on Verilator.
+  - Complete module8/CHECKLIST.md
+  - Run ./scripts/module8.sh --check
+  - 'Next: Next module in course'

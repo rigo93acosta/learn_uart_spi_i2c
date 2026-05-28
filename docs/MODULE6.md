@@ -37,6 +37,8 @@ make SIM=verilator TEST=test_spi_uvm
 
 Or: `./scripts/module6.sh --run`
 
+- **Slides & video**: [slides.pptx](../media/module6/slides.pptx) · [slides.pdf](../media/module6/slides.pdf) · [video.mp4](../media/module6/video.mp4) — regenerate: `./scripts/build_all_media.sh --module 6`
+
 ---
 
 ## Overview
