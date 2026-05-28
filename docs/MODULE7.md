@@ -51,14 +51,48 @@ Module 7 is the I²C **protocol + RTL + basic testbench** module (UVM comes in M
 
 ### What You'll Learn
 
-- How START/STOP are detected/produced (SDA transitions while SCL high).
-- How the address + R/W bit and data bytes are serialized on SDA.
-- How to build a basic “bus monitor” that reconstructs bytes by sampling SDA on SCL rising edges.
+- **RTL block architecture**: `clk_div` + `i2c_master` FSM (START → addr → data → STOP).
+- **Baseline verification**: Directed writes plus inline bus monitor (sample SDA on rising SCL).
+- **Protocol vs simplification**: Real open-drain/ACK vs this repo’s push-pull teaching model.
+- **Path to Module 8**: Same DUT with UVM monitor/scoreboard on address and data phases.
 
 ### Prerequisites
 
 - Modules 1–6.
 - Verilator, Make, C++ compiler. **No UVM required** for this baseline.
+
+---
+
+## Design Architecture
+
+### 1. Block hierarchy
+
+- **top_i2c_baseline** → `clk_div` + `i2c_master`; C++ drives `clk`/`rst_n`.
+
+### 2. I²C master FSM
+
+- States: IDLE → START → ADDR_BITS → DATA_BITS → STOP.
+- One teaching write: 7-bit `addr` + data byte on `scl`/`sda` (push-pull model).
+
+### 3. Teaching vs real I²C
+
+- No open-drain, ACK/NACK, or arbitration in baseline — learn sequencing first.
+
+---
+
+## Verification & Testing Methods
+
+### 1. Inline bus monitor
+
+- Top module detects START; samples SDA on rising SCL; rebuilds addr+W and data.
+
+### 2. Self-check flow
+
+- Compare captured bytes to driven `addr`/`data_in`; print `I2C baseline test PASS`.
+
+### 3. Path to Module 8
+
+- Move monitor into **I2cMonitor**; scoreboard splits address and data phases.
 
 ---
 
@@ -73,25 +107,10 @@ Module 7 is the I²C **protocol + RTL + basic testbench** module (UVM comes in M
 - **Data phase**: 8-bit data bytes sent MSB first.
 - **ACK/NACK** (concept): receiver pulls SDA low for ACK on the 9th clock; high means NACK.
 
-### 2. RTL Architecture (Baseline)
+### 2. Hands-on testbench (i2c_baseline)
 
-- **clk_div**: Divides `clk` to produce `clk_div_tick` used to toggle/advance SCL timing.
-- **i2c_master**: State machine that generates:
-  - START condition
-  - address+W bits
-  - one data byte
-  - STOP condition
-
-### 3. Basic Testbench
-
-The baseline testbench does two jobs:
-
-- **Stimulus**: Pulses `start`, sets `addr` and `data_in`, waits for `done`.
-- **Monitor/self-check**: Detects START, then samples SDA on each **rising** edge of SCL to reconstruct:
-  - 8 bits of address+W
-  - 8 bits of data
-
-It then compares captured bytes to the expected values and prints `I2C baseline test PASS` on success.
+- **Stimulus**: `start`, `addr`, `data_in`, `wait(done)`.
+- **Monitor/self-check**: reconstruct address+W and data from SCL/SDA; compare to expected.
 
 ---
 

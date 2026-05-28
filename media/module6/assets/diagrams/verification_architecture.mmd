@@ -1,0 +1,6 @@
+flowchart TB
+  SEQ["SpiSequence"] --> DRV["SpiDriver\nstart, data_in"]
+  DRV --> DUT["spi_master"]
+  DUT --> WIRE["sclk, mosi, cs_n"]
+  WIRE --> MON["SpiMonitor\nsample MOSI @ rising SCLK"]
+  MON --> SB["SpiScoreboard\nMSB first, Mode 0"]

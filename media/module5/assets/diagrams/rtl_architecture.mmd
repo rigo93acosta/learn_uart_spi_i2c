@@ -1,0 +1,7 @@
+flowchart TB
+  CPP["sim_main.cpp\nclk, rst_n"]
+  DIV["clk_div\nclk_div_tick"]
+  SPI["spi_master\nMode 0 MSB first"]
+  CPP --> DIV
+  DIV --> SPI
+  SPI --> BUS["sclk, mosi, cs_n"]

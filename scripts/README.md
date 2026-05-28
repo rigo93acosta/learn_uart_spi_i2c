@@ -18,7 +18,7 @@ Scripts for running module checks, demos, and **slides/PDF/video** generation.
 ./scripts/verify_all_media.sh                        # quick check
 ```
 
-Outputs: `media/moduleN/slides.pptx`, `slides.pdf`, `video.mp4`. See [media/README.md](../media/README.md) and [media/INDEX.md](../media/INDEX.md).
+Outputs: `media/moduleN/slides.pptx`, `slides.pdf`, `video.mp4`. After each build, the skill prints a **slide summary** table (`print_slide_summary.py`: slide count from `outline.yaml`, plus pptx/pdf/mp4 status). Same table after `regenerate_media_outlines.sh` and `verify_all_media.sh`. See [media/README.md](../media/README.md) and [media/INDEX.md](../media/INDEX.md).
 
 **Live simulation screenshots** require Verilator in PATH. Without it, the build uses `--demo` / README excerpts (see `render_screenshot_fallbacks.py`).
 

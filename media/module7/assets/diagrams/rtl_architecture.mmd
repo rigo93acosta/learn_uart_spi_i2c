@@ -1,0 +1,7 @@
+flowchart TB
+  CPP["sim_main.cpp"]
+  DIV["clk_div"]
+  MST["i2c_master FSM\nSTART → addr → data → STOP"]
+  CPP --> DIV
+  DIV --> MST
+  MST --> BUS["scl, sda"]

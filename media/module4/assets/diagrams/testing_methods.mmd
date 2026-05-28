@@ -1,0 +1,7 @@
+flowchart TB
+  SEQ["UartTxSequence"] --> DRV["Driver"]
+  DRV --> DUT["UART DUT"]
+  DUT --> MON["Monitor on tx"]
+  MON --> SB["Scoreboard TX"]
+  DUT --> RX["RX hook"]
+  RX --> SB

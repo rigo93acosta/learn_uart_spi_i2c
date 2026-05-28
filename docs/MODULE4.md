@@ -63,24 +63,55 @@ Module 4 builds on Module 3 (UART protocol + RTL + basic testbench):
 
 ---
 
+## Design Architecture
+
+### 1. UART DUT (reused from Module 3)
+
+- **dut/**: `uart_tx`, `uart_rx`, `baud_gen` — identical RTL to `uart_baseline`.
+- **Loopback** in top: `rx = tx` for closed-loop checking.
+- **Why reuse**: Upgrade verification (UVM) without touching proven RTL.
+
+### 2. UVM testbench hierarchy
+
+- **uart_tx_if**: virtual interface for driver/monitor.
+- **UartTxTransaction / Sequence / Driver / Monitor / Scoreboard / Agent / Env / Test** — same pattern as `uvm_smoke`.
+- **Monitor** reconstructs bytes from the serial `tx` line using UART 8N1 rules.
+
+### 3. Dual check paths
+
+- **TX path**: sequence → driver → DUT → monitor → scoreboard (`observed_tx`).
+- **RX path**: loopback into `uart_rx`; `check_rx_byte()` when `data_valid` asserts.
+
+---
+
+## Verification & Testing Methods
+
+### 1. Directed UART regression
+
+- Sequence sends 0x00, 0x01, 0x55, 0xAA, 0xFF — repeatable regression before randomization.
+
+### 2. Scoreboard strategy
+
+- Expected queue loaded in test; compare to monitor-reconstructed TX and to RX hook data.
+- Fail fast on mismatch; read UVM SCOREBOARD summary at end of run.
+
+### 3. What to add next
+
+- Random baud, framing-error injection, coverage on `busy` / `data_valid`.
+- See [LEARNING_GUIDE_PROTOCOLS_AND_UVM.md § 6](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#6-uart-uvm-mapping-module-4).
+
+---
+
 ## Topics Covered
 
-### 1. UART UVM Agent
+### 1. UART protocol recap (8N1)
 
-- **Transaction** (UartTxTransaction): byte to send (data); monitor fills observed_tx (reconstructed from serial line).
-- **Sequence** (UartTxSequence): produces directed transactions (0x00, 0x01, 0x55, 0xAA, 0xFF).
-- **Driver** (UartTxDriver): gets transaction, drives start and data for one cycle, waits 10 baud_ticks (one frame).
-- **Monitor** (UartTxMonitor): watches tx line for start bit, samples 8 data bits per baud_tick, writes transaction to scoreboard.
-- **Scoreboard** (UartTxScoreboard): compares expected (from test) vs observed_tx (from monitor); also check_rx_byte for loopback RX.
+- One byte = start (0) + 8 data (LSB first) + stop (1); `baud_tick` times each bit.
+- Driver/monitor must follow the same rules as the RTL.
 
-### 2. Loopback and RX Check
+### 2. Toolchain
 
-- **Loopback**: TX output (vif.tx) is connected to RX input (dut_rx.rx). Bytes sent by driver are received by uart_rx.
-- **RX hook**: An initial block in the top looks up the scoreboard and calls check_rx_byte(rx_data) when rx_valid is high, so both TX path (monitor) and RX path (loopback) are checked.
-
-### 3. Toolchain
-
-- Same as Module 2: Verilator with -sv, --timing, --trace, UVM include paths, make SIM=verilator TEST=test_uart_uvm. Run with +UVM_TESTNAME=UartTxTest.
+- Verilator `-sv`, `--timing`, UVM includes; `make SIM=verilator TEST=test_uart_uvm`; `+UVM_TESTNAME=UartTxTest`.
 
 ---
 

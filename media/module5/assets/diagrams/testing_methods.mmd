@@ -1,0 +1,4 @@
+flowchart LR
+  STIM["start + data_in"] --> SPI["spi_master"]
+  SPI --> DONE["wait done"]
+  DONE --> PASS["baseline PASS"]

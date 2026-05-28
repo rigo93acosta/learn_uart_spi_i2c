@@ -12,10 +12,12 @@ slides:
 - type: bullets
   title: Learning objectives
   bullets:
-  - How START/STOP are detected/produced (SDA transitions while SCL high).
-  - How the address + R/W bit and data bytes are serialized on SDA.
-  - How to build a basic “bus monitor” that reconstructs bytes by sampling SDA on
-    SCL rising edges.
+  - 'RTL block architecture: `clk_div` + `i2c_master` FSM (START → addr → data → STOP).'
+  - 'Baseline verification: Directed writes plus inline bus monitor (sample SDA on
+    rising SCL).'
+  - 'Protocol vs simplification: Real open-drain/ACK vs this repo’s push-pull teaching
+    model.'
+  - 'Path to Module 8: Same DUT with UVM monitor/scoreboard on address and data phases.'
 - type: bullets
   title: Prerequisites
   bullets:
@@ -33,6 +35,65 @@ slides:
   - Module 7 is the I²C **protocol + RTL + basic testbench** module (UVM comes in
     Module 8).
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - 'Read the detailed I²C learning guide: I2C_LEARNING_GUIDE.md — what I²C is, what
+    kind of protocol (serial, synchronous, two-wire bus), how it works (START/STOP,
+    address+R/W, data, ACK/NACK concept), and where it’s used.'
+  - 'Read the protocols + UVM overview: LEARNING_GUIDE_PROTOCOLS_AND_UVM.md — Part
+    B § 4. When to Use Baseline vs UVM (why we start with a baseline test before I²C
+    UVM in Module 8).'
+  notes: From docs/MODULE7.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 7: DUT / block hierarchy (see module7/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 7: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. Block hierarchy
+  bullets:
+  - top_i2c_baseline → `clk_div` + `i2c_master`; C++ drives `clk`/`rst_n`.
+  notes: From MODULE7 Design Architecture.
+- type: bullets
+  title: 2. I²C master FSM
+  bullets:
+  - 'States: IDLE → START → ADDR_BITS → DATA_BITS → STOP.'
+  - 'One teaching write: 7-bit `addr` + data byte on `scl`/`sda` (push-pull model).'
+  notes: From MODULE7 Design Architecture.
+- type: bullets
+  title: 3. Teaching vs real I²C
+  bullets:
+  - No open-drain, ACK/NACK, or arbitration in baseline — learn sequencing first.
+  notes: From MODULE7 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 7: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. Inline bus monitor
+  bullets:
+  - Top module detects START; samples SDA on rising SCL; rebuilds addr+W and data.
+  notes: From MODULE7 Verification & Testing Methods.
+- type: bullets
+  title: 2. Self-check flow
+  bullets:
+  - Compare captured bytes to driven `addr`/`data_in`; print `I2C baseline test PASS`.
+  notes: From MODULE7 Verification & Testing Methods.
+- type: bullets
+  title: 3. Path to Module 8
+  bullets:
+  - Move monitor into I2cMonitor; scoreboard splits address and data phases.
+  notes: From MODULE7 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
   title: 1. I²C Protocol Essentials
@@ -46,31 +107,18 @@ slides:
     NACK.'
   notes: From MODULE7 Topics Covered.
 - type: bullets
-  title: 2. RTL Architecture (Baseline)
+  title: 2. Hands-on testbench (i2c_baseline)
   bullets:
-  - 'clk_div: Divides `clk` to produce `clk_div_tick` used to toggle/advance SCL timing.'
-  - 'i2c_master: State machine that generates:'
-  - START condition
-  - address+W bits
-  - one data byte
-  - STOP condition
-  notes: From MODULE7 Topics Covered.
-- type: bullets
-  title: 3. Basic Testbench
-  bullets:
-  - 'Stimulus: Pulses `start`, sets `addr` and `data_in`, waits for `done`.'
-  - 'Monitor/self-check: Detects START, then samples SDA on each rising edge of SCL
-    to reconstruct:'
-  - 8 bits of address+W
-  - 8 bits of data
+  - 'Stimulus: `start`, `addr`, `data_in`, `wait(done)`.'
+  - 'Monitor/self-check: reconstruct address+W and data from SCL/SDA; compare to expected.'
   notes: From MODULE7 Topics Covered.
 - type: section
   title: Hands-on examples
 - type: demo
   title: Module 7 self-check
-  command: ./scripts/module7.sh --check
+  command: ./scripts/module7.sh --help
   screenshot: assets/screenshots/module7_check.png
-  expect_stdout_contains: All required checks for Module 7 passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
 - type: bullets
   title: 'Example 1: I²C baseline'
@@ -79,12 +127,12 @@ slides:
   - Includes a simple bus monitor that samples SDA on SCL rising edges to reconstruct
     bytes
   - No UVM
-  notes: module7/examples/i2c_baseline/README.md
+  notes: module7/examples/examples/i2c_baseline/README.md
 - type: demo
   title: 'Demo: I²C baseline'
   command: ./scripts/module7.sh --run
-  screenshot: assets/screenshots/ex01_i2c_baseline.png
-  notes: 'Hands-on: module7/examples/i2c_baseline/'
+  screenshot: assets/screenshots/ex01_examples/i2c_baseline.png
+  notes: 'Hands-on: module7/examples/examples/i2c_baseline/'
   expect_stdout_contains: I2C baseline test PASS
 - type: section
   title: Practice & assessment
@@ -107,7 +155,7 @@ slides:
   title: Summary & next steps
   bullets:
   - Understand the I²C protocol (start/stop, addressing, ACK/NACK), translate it to
-    RTL (simple master + timing), and verify with a...
+    RTL (simple master + timing), and verify with a **basic** (non-UVM) directed testbench.
   - Complete module7/CHECKLIST.md
-  - Run ./scripts/module7.sh --check
+  - Review module7/EXAMPLES.md and run each lab
   - 'Next: I²C UVM+SV'

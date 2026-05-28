@@ -63,6 +63,45 @@ Module 3 is the first **protocol** module:
 
 ---
 
+## Design Architecture
+
+### 1. Block hierarchy
+
+- **top_uart_baseline** → `baud_gen`, `uart_tx`, `uart_rx`; **sim_main.cpp** drives `clk`/`rst_n` only.
+- **Loopback**: `assign rx = tx` — one wire connects transmitter to receiver.
+
+### 2. RTL blocks
+
+- **baud_gen**: `DIVIDER` → `baud_tick` every N clocks; shared by TX and RX.
+- **uart_tx**: parallel-in / serial-out; start + 8 data (LSB first) + stop; `busy` during frame.
+- **uart_rx**: start detect, sample per `baud_tick`, `data_valid` + optional `framing_error`.
+
+### 3. Timing and clocking
+
+- Single `clk` domain; async `rst_n`; all bit times referenced to `baud_tick`.
+
+---
+
+## Verification & Testing Methods
+
+### 1. Verification goals
+
+- Prove RTL implements **UART 8N1** before UVM (Module 4).
+- Happy-path loopback: bytes sent on TX appear correctly on RX.
+
+### 2. Baseline directed test
+
+- **Stimulus**: `initial` block — `start`, `data_in` (0x55, 0xAA).
+- **Check**: `wait(data_valid)`; compare `data_out`; `$error` / `$display`.
+- **No UVM**: pin wiggling only — fastest way to learn the protocol on real RTL.
+
+### 3. Coverage gaps (defer to Module 4)
+
+- Random baud, framing errors, `busy` back-to-back, functional coverage.
+- Map checks to [UART_LEARNING_GUIDE.md](UART_LEARNING_GUIDE.md) spec bullets.
+
+---
+
 ## Topics Covered
 
 ### 1. UART Protocol (8N1)
@@ -107,16 +146,11 @@ Module 3 is the first **protocol** module:
 - **Flow control**: RTS/CTS hardware pins (outside the serial line) to throttle traffic.
 - The baseline RTL assumes 8N1 with no parity and no flow control.
 
-### 2. RTL Architecture
-
-- **baud_gen**: Divides `clk`; outputs `baud_tick` one cycle every DIVIDER cycles.
-- **uart_tx**: On `start`, loads `data_in` into shift register; outputs one bit per `baud_tick` (start, data[0:7], stop); asserts `busy` during frame.
-- **uart_rx**: Detects start bit (line low), samples one bit per `baud_tick`, reconstructs byte; pulses `data_valid` and outputs `data_out`; can assert `framing_error` if stop bit is bad.
-
-### 3. Basic Testbench
+### 2. Hands-on testbench (uart_baseline)
 
 - **Loopback**: Connect TX output to RX input; send bytes from TX, check they appear on RX.
 - **Directed test**: Reset release, send 0x55 and 0xAA, wait for `data_valid`, check `data_out`. Implemented in `top_uart_baseline.sv` (initial block) and C++ (clk, rst_n); no UVM.
+- **Self-check flow**: `wait(rst_n)` → pulse `start`/`data_in` → `wait(!busy)` → `wait(data_valid)` → compare `data_out` → repeat → `$finish`.
 
 ---
 

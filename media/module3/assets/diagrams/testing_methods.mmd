@@ -1,0 +1,5 @@
+flowchart LR
+  STIM["directed bytes"] --> TX["uart_tx"]
+  TX --> RX["uart_rx loopback"]
+  RX --> CHK["data_out check"]
+  CHK --> PASS["baseline PASS"]

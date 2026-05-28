@@ -52,14 +52,49 @@ Module 5 is the second **protocol** module (after UART):
 ### What You'll Learn
 
 - **SPI mode 0**: SCLK idle low; capture on rising edge; change on falling edge; CS_N active low for frame.
-- **Signals**: sclk, mosi, cs_n; clk_div_tick for timing (no MISO in this baseline).
-- **RTL architecture**: spi_master (start, data_in → sclk, mosi, cs_n, done); clk_div (divider → clk_div_tick).
-- **Basic TB**: Directed transfers (e.g. 0x55, 0xAA); wait for done; no UVM.
+- **RTL block architecture**: `clk_div` + `spi_master` hierarchy, FSM, and Mode 0 timing on the wire.
+- **Baseline verification**: Directed stimulus, `done`-based checks, and optional waveform review (8 SCLK edges, MSB first).
+- **Path to Module 6**: Same DUT, UVM agent with bus monitor on SCLK/MOSI/CS_N.
 
 ### Prerequisites
 
 - Modules 1–4 (spec→RTL, UVM, UART baseline, UART UVM).
 - Verilator, Make, C++ compiler. **No UVM required** for spi_baseline.
+
+---
+
+## Design Architecture
+
+### 1. Block hierarchy
+
+- **top_spi_baseline** → `clk_div` + `spi_master`; C++ supplies `clk`/`rst_n`.
+
+### 2. SPI master RTL
+
+- **clk_div**: `clk_div_tick` every `DIVIDER` clocks.
+- **spi_master**: Mode 0; `cs_n` frames; MSB-first on `mosi`; `done` when complete.
+- **Outputs**: `sclk` (idle low), `mosi`, `cs_n` — no `miso` in baseline.
+
+### 3. Mode 0 timing on the wire
+
+- Capture on rising SCLK; change MOSI on falling SCLK; 8 edges per byte.
+
+---
+
+## Verification & Testing Methods
+
+### 1. Baseline goals
+
+- Confirm Mode 0 serialization before SPI UVM (Module 6).
+
+### 2. Directed test flow
+
+- Pulse `start` + `data_in` (0x55, 0xAA); `wait(done)`; read `[PASS]` messages.
+
+### 3. Waveform learning (optional)
+
+- Count 8 SCLK cycles per frame; verify MSB-first bit order on MOSI.
+- Defer MISO, multi-slave CS, and random data to Module 6.
 
 ---
 
@@ -71,14 +106,10 @@ Module 5 is the second **protocol** module (after UART):
 - **Mode 0 (CPOL=0, CPHA=0)**: SCLK idles low; data captured on rising edge; data changed on falling edge.
 - **Timing**: One bit per clk_div_tick; clk_div_tick derived from system clock via divider (e.g. DIVIDER=8).
 
-### 2. RTL Architecture
+### 2. Hands-on testbench (spi_baseline)
 
-- **clk_div**: Divides clk; outputs clk_div_tick one cycle every DIVIDER cycles.
-- **spi_master**: On start, loads data_in into shift register; asserts cs_n low; toggles sclk on clk_div_tick; outputs one bit per half-cycle (MSB first); pulses done when frame complete.
-
-### 3. Basic Testbench
-
-- **Directed test**: Reset release; start=1, data_in=0x55; wait for done; repeat for 0xAA; $finish. Implemented in top_spi_baseline.sv (initial block) and C++ (clk, rst_n); no UVM.
+- **Directed test** in `top_spi_baseline.sv`: `start`, `data_in`, `wait(done)`.
+- **Pass**: `[PASS]` lines and `SPI baseline test PASS`.
 
 ---
 

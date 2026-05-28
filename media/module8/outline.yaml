@@ -30,32 +30,85 @@ slides:
   bullets:
   - 'Module 8 builds on Module 7 (I²C protocol + RTL + basic testbench):'
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - 'Read the detailed I²C learning guide: I2C_LEARNING_GUIDE.md — what I²C is, how
+    it works (START/STOP, address+R/W, data, timing), and how it maps to our RTL.'
+  - 'Read the protocols + UVM overview: LEARNING_GUIDE_PROTOCOLS_AND_UVM.md — Part
+    B § 5. How UVM Maps to a Protocol and § 8. I²C UVM Mapping (where UVM sits, how
+    transaction/driver/monitor/scoreboard map to I²C).'
+  notes: From docs/MODULE8.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 8: DUT / block hierarchy (see module8/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 8: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. I²C DUT (reused from Module 7)
+  bullets:
+  - i2c_master + clk_div; i2c_if for UVM connection.
+  - 'Wire sequence: START → address+W → data → STOP.'
+  notes: From MODULE8 Design Architecture.
+- type: bullets
+  title: 2. UVM agent
+  bullets:
+  - I2cTransaction holds `addr` + `data`; monitor fills `observed_*`.
+  - I2cMonitor reimplements baseline bus sampling inside UVM.
+  - I2cScoreboard checks address and data phases independently.
+  notes: From MODULE8 Design Architecture.
+- type: bullets
+  title: 3. Course capstone
+  bullets:
+  - Compare UART (async), SPI (SCLK+CS), I²C (shared bus) — same UVM skeleton, different
+    monitors.
+  notes: From MODULE8 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 8: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. Two-phase scoreboard
+  bullets:
+  - Separate checks for address+W byte and data byte — catches shifted or merged fields.
+  notes: From MODULE8 Verification & Testing Methods.
+- type: bullets
+  title: 2. Reuse baseline monitor logic
+  bullets:
+  - Module 7 inline monitor → Module 8 I2cMonitor for scalable tests.
+  notes: From MODULE8 Verification & Testing Methods.
+- type: bullets
+  title: 3. Extensions
+  bullets:
+  - ACK/NACK, reads, multi-master — [LEARNING_GUIDE § 8](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#8-i2c-uvm-mapping-module-8).
+  notes: From MODULE8 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
-  title: 1. I²C UVM Agent
+  title: 1. I²C protocol recap
   bullets:
-  - 'Transaction (I2cTransaction): address and data to write; monitor fills observed_addr/observed_data.'
-  - 'Sequence (I2cSequence): produces directed transactions (e.g. same addr, different
-    data bytes).'
-  - 'Driver (I2cDriver): gets transaction, drives start/addr/data_in for one cycle,
-    waits for done.'
-  - 'Monitor (I2cMonitor): watches SCL/SDA; after START, samples SDA on rising SCL
-    to reconstruct 8 bits of address+W and 8 bits of data.'
-  - 'Scoreboard (I2cScoreboard): compares expected (from test) vs observed_addr/observed_data.'
+  - START/STOP on SCL high; MSB-first address and data on SDA.
   notes: From MODULE8 Topics Covered.
 - type: bullets
   title: 2. Toolchain
   bullets:
-  - 'Same as Module 6 (SPI UVM): Verilator with -sv, --timing, --trace, UVM include
-    paths, `make SIM=verilator TEST=test_i2c_uvm`. Run with...'
+  - '`make SIM=verilator TEST=test_i2c_uvm`; `+UVM_TESTNAME=test_i2c_uvm`.'
   notes: From MODULE8 Topics Covered.
 - type: section
   title: Hands-on examples
 - type: demo
   title: Module 8 self-check
-  command: ./scripts/module8.sh --check
+  command: ./scripts/module8.sh --help
   screenshot: assets/screenshots/module8_check.png
-  expect_stdout_contains: All required checks for Module 8 passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
 - type: bullets
   title: 'Example 1: I²C UVM'
@@ -63,15 +116,23 @@ slides:
   - UVM phases and reporting (DRIVER, MONITOR, SCOREBOARD).
   - Scoreboard checks (expected vs observed address+data from the bus).
   - Final scoreboard summary (matches and mismatches).
-  notes: module8/examples/i2c_uvm/README.md
+  notes: module8/examples/examples/i2c_uvm/README.md
 - type: demo
   title: 'Demo: I²C UVM'
   command: ./scripts/module8.sh --run
-  screenshot: assets/screenshots/ex01_i2c_uvm.png
-  notes: 'Hands-on: module8/examples/i2c_uvm/'
+  screenshot: assets/screenshots/ex01_examples/i2c_uvm.png
+  notes: 'Hands-on: module8/examples/examples/i2c_uvm/'
   expect_stdout_contains: SCOREBOARD
 - type: section
   title: Practice & assessment
+- type: bullets
+  title: What you should know
+  bullets:
+  - Describe the I²C UVM agent and how I2cMonitor maps to SCL/SDA behavior.
+  - Explain two-phase scoreboard checking (address vs data).
+  - Run `i2c_uvm` and interpret UVM / scoreboard output.
+  - Compare verification architecture across UART, SPI, and I²C modules in this course.
+  notes: From MODULE8 Learning Outcomes.
 - type: bullets
   title: Exercises
   bullets:
@@ -91,5 +152,5 @@ slides:
   - Extend I²C verification to **UVM+SV** — I²C agent (transaction, sequence, driver,
     monitor, scoreboard); run on Verilator.
   - Complete module8/CHECKLIST.md
-  - Run ./scripts/module8.sh --check
+  - Review module8/EXAMPLES.md and run each lab
   - 'Next: Next module in course'

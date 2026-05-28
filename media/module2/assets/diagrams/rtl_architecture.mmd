@@ -1,0 +1,15 @@
+flowchart TB
+  subgraph uvm["UVM testbench"]
+    SEQ["RegSequence"]
+    DRV["RegDriver"]
+    MON["RegMonitor"]
+    SB["RegScoreboard"]
+    SEQ --> DRV
+    MON --> SB
+  end
+  IF["reg_if"]
+  DUT["simple_register.v"]
+  DRV --> IF
+  IF --> DUT
+  DUT --> IF
+  IF --> MON

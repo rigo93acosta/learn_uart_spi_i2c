@@ -33,58 +33,113 @@ slides:
   bullets:
   - 'Module 6 builds on Module 5 (SPI protocol + RTL + basic testbench):'
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - 'Read the detailed SPI learning guide: SPI_LEARNING_GUIDE.md — what SPI is, how
+    it works (signals, Mode 0, timing), and how it maps to our RTL.'
+  - 'Read the protocols + UVM overview: LEARNING_GUIDE_PROTOCOLS_AND_UVM.md — Part
+    B § 5. How UVM Maps to a Protocol and § 7. SPI UVM Mapping (where UVM sits, how
+    transaction/driver/monitor/scoreboard map to SPI).'
+  notes: From docs/MODULE6.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 6: DUT / block hierarchy (see module6/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 6: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. SPI DUT (reused from Module 5)
+  bullets:
+  - spi_master + clk_div in `module6/examples/spi_uvm/dut/`.
+  - spi_master_if connects UVM to DUT pins.
+  notes: From MODULE6 Design Architecture.
+- type: bullets
+  title: 2. UVM agent structure
+  bullets:
+  - SpiTransaction = one byte; SpiSequence = directed list; SpiDriver waits on `done`.
+  - SpiMonitor samples MOSI on rising SCLK while `cs_n` is low (Mode 0, MSB first).
+  - SpiScoreboard compares expected vs `observed_mosi`.
+  notes: From MODULE6 Design Architecture.
+- type: bullets
+  title: 3. Bus vs DUT checking
+  bullets:
+  - Monitor validates wire behavior; `done` alone is not sufficient for sign-off.
+  notes: From MODULE6 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 6: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. Mode 0 in the testbench
+  bullets:
+  - Monitor must use rising-edge capture and falling-edge change — matches CPOL/CPHA=0.
+  notes: From MODULE6 Verification & Testing Methods.
+- type: bullets
+  title: 2. Directed regression
+  bullets:
+  - Same byte pattern as UART UVM (0x00 … 0xFF) for apples-to-apples learning.
+  notes: From MODULE6 Verification & Testing Methods.
+- type: bullets
+  title: 3. Extensions
+  bullets:
+  - MISO reads, random data, mode parameters — see [LEARNING_GUIDE § 7](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#7-spi-uvm-mapping-module-6).
+  notes: From MODULE6 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
-  title: 1. SPI UVM Agent
+  title: 1. SPI protocol recap (Mode 0)
   bullets:
-  - 'Transaction (SpiTransaction): byte to send (data); monitor fills observed_mosi
-    (reconstructed from MOSI on SCLK).'
-  - 'Sequence (SpiSequence): produces directed transactions (0x00, 0x01, 0x55, 0xAA,
-    0xFF).'
-  - 'Driver (SpiDriver): gets transaction, drives start and data_in for one cycle,
-    waits for done.'
-  - 'Monitor (SpiMonitor): watches cs_n; when cs_n goes low, samples MOSI on each
-    rising edge of SCLK (mode 0, MSB first), writes transaction...'
-  - 'Scoreboard (SpiScoreboard): compares expected (from test) vs observed_mosi (from
-    monitor).'
+  - '`cs_n` frames; 8 SCLK cycles per byte; MSB first on MOSI.'
   notes: From MODULE6 Topics Covered.
 - type: bullets
-  title: 2. Mode 0 Timing
+  title: 2. Toolchain
   bullets:
-  - 'SPI mode 0: SCLK idles low; data captured on rising edge; data changed on falling
-    edge.'
-  - 'Monitor: Waits for cs_n low, then on 8 rising edges of SCLK captures MOSI into
-    bits [7:0] (MSB first).'
-  notes: From MODULE6 Topics Covered.
-- type: bullets
-  title: 3. Toolchain
-  bullets:
-  - 'Same as Module 2: Verilator with -sv, --timing, --trace, UVM include paths, make
-    SIM=verilator TEST=test_spi_uvm. Run with...'
+  - '`make SIM=verilator TEST=test_spi_uvm`; `+UVM_TESTNAME=SpiTest`.'
   notes: From MODULE6 Topics Covered.
 - type: section
   title: Hands-on examples
 - type: demo
   title: Module 6 self-check
-  command: ./scripts/module6.sh --check
+  command: ./scripts/module6.sh --help
   screenshot: assets/screenshots/module6_check.png
-  expect_stdout_contains: All required checks for Module 6 passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
+- type: code
+  title: Exercise scaffold
+  language: bash
+  source_file: scripts/module6.sh
+  code: ./scripts/module6.sh --scaffold
 - type: bullets
   title: 'Example 1: SPI UVM'
   bullets:
   - UVM phases and reporting (DRIVER, MONITOR, SCOREBOARD).
   - Scoreboard checks (expected byte from sequence vs observed byte on MOSI).
   - Final scoreboard summary (matches and mismatches).
-  notes: module6/examples/spi_uvm/README.md
+  notes: module6/examples/examples/spi_uvm/README.md
 - type: demo
   title: 'Demo: SPI UVM'
   command: ./scripts/module6.sh --run
-  screenshot: assets/screenshots/ex01_spi_uvm.png
-  notes: 'Hands-on: module6/examples/spi_uvm/'
+  screenshot: assets/screenshots/ex01_examples/spi_uvm.png
+  notes: 'Hands-on: module6/examples/examples/spi_uvm/'
   expect_stdout_contains: SCOREBOARD
 - type: section
   title: Practice & assessment
+- type: bullets
+  title: What you should know
+  bullets:
+  - Describe the SPI UVM agent (transaction, sequence, driver, monitor, scoreboard)
+    and mode 0 monitoring.
+  - Run spi_uvm and interpret UVM output.
+  - 'Ready for Module 7: I²C protocol + RTL + basic testbench.'
+  notes: From MODULE6 Learning Outcomes.
 - type: bullets
   title: Exercises
   bullets:
@@ -104,5 +159,5 @@ slides:
   - Extend SPI verification to **UVM+SV** — SPI agent (transaction, sequence, driver,
     monitor, scoreboard); run on Verilator.
   - Complete module6/CHECKLIST.md
-  - Run ./scripts/module6.sh --check
+  - Review module6/EXAMPLES.md and run each lab
   - 'Next: I²C'

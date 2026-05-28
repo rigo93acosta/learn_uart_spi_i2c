@@ -1,0 +1,7 @@
+flowchart TB
+  subgraph dut["SPI DUT (Module 5)"]
+    DIV["clk_div"]
+    M["spi_master"]
+    DIV --> M
+  end
+  IF["spi_master_if"]

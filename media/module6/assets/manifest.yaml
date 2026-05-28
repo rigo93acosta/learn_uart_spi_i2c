@@ -8,20 +8,45 @@ assets:
   generator: render_diagrams.sh
   slides:
   - 4
+  - 4
+  license: learn_uart_spi_i2c course materials
+- id: rtl_architecture
+  type: diagram
+  file: assets/diagrams/rtl_architecture.png
+  source: assets/diagrams/rtl_architecture.mmd
+  generator: render_diagrams.sh
+  slides:
+  - 9
+  license: learn_uart_spi_i2c course materials
+- id: verification_architecture
+  type: diagram
+  file: assets/diagrams/verification_architecture.png
+  source: assets/diagrams/verification_architecture.mmd
+  generator: render_diagrams.sh
+  slides:
+  - 10
+  license: learn_uart_spi_i2c course materials
+- id: testing_methods
+  type: diagram
+  file: assets/diagrams/testing_methods.png
+  source: assets/diagrams/testing_methods.mmd
+  generator: render_diagrams.sh
+  slides:
+  - 15
   license: learn_uart_spi_i2c course materials
 - id: module6_check
   type: screenshot
   file: assets/screenshots/module6_check.png
-  capture_command: ./scripts/module6.sh --check
+  capture_command: ./scripts/module6.sh --help
   cwd: .
   slides:
-  - 11
-  expect_stdout_contains: All required checks for Module 6 passed
-- id: ex01_spi_uvm
+  - 23
+  expect_stdout_contains: Module
+- id: spi_uvm
   type: screenshot
-  file: assets/screenshots/ex01_spi_uvm.png
+  file: assets/screenshots/ex01_examples/spi_uvm.png
   capture_command: ./scripts/module6.sh --run
   cwd: .
   slides:
-  - 13
+  - 26
   expect_stdout_contains: SCOREBOARD

@@ -1,0 +1,10 @@
+flowchart TB
+  subgraph dut["UART DUT (same as Module 3)"]
+    BG["baud_gen"]
+    TX["uart_tx"]
+    RX["uart_rx"]
+    BG --> TX
+    BG --> RX
+    TX -->|rx = tx| RX
+  end
+  VIF["uart_tx_if\nvirtual interface"]

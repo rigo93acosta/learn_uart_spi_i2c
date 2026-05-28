@@ -1,0 +1,5 @@
+flowchart LR
+  STIM["initial block\nstart, data_in\n0x55, 0xAA"] --> TX["uart_tx"]
+  TX -->|loopback| RX["uart_rx"]
+  RX --> CHK["wait data_valid\ncompare data_out"]
+  CHK --> PASS["PASS / $error"]

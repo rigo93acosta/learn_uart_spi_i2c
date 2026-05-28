@@ -1,0 +1,9 @@
+flowchart TB
+  CPP["sim_main.cpp\nclk, rst_n"]
+  BG["baud_gen\nDIVIDER → baud_tick"]
+  TX["uart_tx\nparallel → serial"]
+  RX["uart_rx\nserial → parallel"]
+  CPP --> BG
+  BG --> TX
+  BG --> RX
+  TX -->|tx line| RX

@@ -31,6 +31,73 @@ slides:
   bullets:
   - 'Module 3 is the first **protocol** module:'
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - 'Read the detailed UART learning guide: UART_LEARNING_GUIDE.md — what UART is,
+    what kind of protocol (serial, asynchronous, point-to-point), how it works (frame
+    format, baud rate, TX/RX), timing, and where it’s used.'
+  - 'Read the protocols + UVM overview: LEARNING_GUIDE_PROTOCOLS_AND_UVM.md — Part
+    B § 4. When to Use Baseline vs UVM (why we start with a baseline testbench before
+    UVM).'
+  notes: From docs/MODULE3.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 3: DUT / block hierarchy (see module3/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 3: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. Block hierarchy
+  bullets:
+  - top_uart_baseline → `baud_gen`, `uart_tx`, `uart_rx`; sim_main.cpp drives `clk`/`rst_n`
+    only.
+  - 'Loopback: `assign rx = tx` — one wire connects transmitter to receiver.'
+  notes: From MODULE3 Design Architecture.
+- type: bullets
+  title: 2. RTL blocks
+  bullets:
+  - 'baud_gen: `DIVIDER` → `baud_tick` every N clocks; shared by TX and RX.'
+  - 'uart_tx: parallel-in / serial-out; start + 8 data (LSB first) + stop; `busy`
+    during frame.'
+  - 'uart_rx: start detect, sample per `baud_tick`, `data_valid` + optional `framing_error`.'
+  notes: From MODULE3 Design Architecture.
+- type: bullets
+  title: 3. Timing and clocking
+  bullets:
+  - Single `clk` domain; async `rst_n`; all bit times referenced to `baud_tick`.
+  notes: From MODULE3 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 3: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. Verification goals
+  bullets:
+  - Prove RTL implements UART 8N1 before UVM (Module 4).
+  - 'Happy-path loopback: bytes sent on TX appear correctly on RX.'
+  notes: From MODULE3 Verification & Testing Methods.
+- type: bullets
+  title: 2. Baseline directed test
+  bullets:
+  - 'Stimulus: `initial` block — `start`, `data_in` (0x55, 0xAA).'
+  - 'Check: `wait(data_valid)`; compare `data_out`; `$error` / `$display`.'
+  - 'No UVM: pin wiggling only — fastest way to learn the protocol on real RTL.'
+  notes: From MODULE3 Verification & Testing Methods.
+- type: bullets
+  title: 3. Coverage gaps (defer to Module 4)
+  bullets:
+  - Random baud, framing errors, `busy` back-to-back, functional coverage.
+  - Map checks to [UART_LEARNING_GUIDE.md](UART_LEARNING_GUIDE.md) spec bullets.
+  notes: From MODULE3 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
   title: 1. UART Protocol (8N1) (1/4)
@@ -54,7 +121,8 @@ slides:
   - 'Inputs: `clk`, `rst_n`, `baud_tick`, `start`, `data_in[7:0]`.'
   - 'Outputs: `tx`, `busy`.'
   - 'Behavior: On `start`, latch `data_in`, drive start bit low, then shift out bits
-    [0:7] each `baud_tick`, then drive stop bit high for one...'
+    [0:7] each `baud_tick`, then drive stop bit high for one `baud_tick`. Deassert
+    `busy` after stop bit.'
   - 'Edge cases: Ignore `start` while `busy` (or queue it in a FIFO if you extend
     the design).'
   - 'Inputs: `clk`, `rst_n`, `baud_tick`, `rx`.'
@@ -64,11 +132,11 @@ slides:
   bullets:
   - 'Outputs: `data_out[7:0]`, `data_valid` (pulse), `framing_error`.'
   - 'Robustness options: Add metastability sync on `rx`; add oversampling + majority
-    vote; add `rx_ready`/`rx_valid` handshake if you later...'
+    vote; add `rx_ready`/`rx_valid` handshake if you later connect to a FIFO.'
   - 'Inputs: `clk`, `rst_n`, `divisor` (constant parameter in the baseline).'
   - 'Output: `baud_tick` high for one cycle every `divisor` clocks.'
   - For synthesis, keep the counter simple (`divisor-1` down-counter or up-counter
-    compare). For sim, you can parametrize `divisor` to speed...
+    compare). For sim, you can parametrize `divisor` to speed up runs.
   - 'Data bits: 5–9 data bits are common.'
   notes: From MODULE3 Topics Covered.
 - type: bullets
@@ -80,30 +148,29 @@ slides:
   - The baseline RTL assumes 8N1 with no parity and no flow control.
   notes: From MODULE3 Topics Covered.
 - type: bullets
-  title: 2. RTL Architecture
-  bullets:
-  - 'baud_gen: Divides `clk`; outputs `baud_tick` one cycle every DIVIDER cycles.'
-  - 'uart_tx: On `start`, loads `data_in` into shift register; outputs one bit per
-    `baud_tick` (start, data[0:7], stop); asserts `busy`...'
-  - 'uart_rx: Detects start bit (line low), samples one bit per `baud_tick`, reconstructs
-    byte; pulses `data_valid` and outputs `data_out`...'
-  notes: From MODULE3 Topics Covered.
-- type: bullets
-  title: 3. Basic Testbench
+  title: 2. Hands-on testbench (uart_baseline)
   bullets:
   - 'Loopback: Connect TX output to RX input; send bytes from TX, check they appear
     on RX.'
   - 'Directed test: Reset release, send 0x55 and 0xAA, wait for `data_valid`, check
-    `data_out`. Implemented in `top_uart_baseline.sv`...'
+    `data_out`. Implemented in `top_uart_baseline.sv` (initial block) and C++ (clk,
+    rst_n); no UVM.'
+  - 'Self-check flow: `wait(rst_n)` → pulse `start`/`data_in` → `wait(!busy)` → `wait(data_valid)`
+    → compare `data_out` → repeat → `$finish`.'
   notes: From MODULE3 Topics Covered.
 - type: section
   title: Hands-on examples
 - type: demo
   title: Module 3 self-check
-  command: ./scripts/module3.sh --check
+  command: ./scripts/module3.sh --help
   screenshot: assets/screenshots/module3_check.png
-  expect_stdout_contains: All required checks for Module 3 passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
+- type: code
+  title: Exercise scaffold
+  language: bash
+  source_file: scripts/module3.sh
+  code: ./scripts/module3.sh --scaffold
 - type: bullets
   title: 'Example 1: UART baseline'
   bullets:
@@ -111,15 +178,23 @@ slides:
   - '`top_uart_baseline.sv`: Top with loopback; directed stimulus and checks in initial
     blocks.'
   - '`sim_main.cpp`: C++ harness (clock, reset); simulation runs until `$finish`.'
-  notes: module3/examples/uart_baseline/README.md
+  notes: module3/examples/examples/uart_baseline/README.md
 - type: demo
   title: 'Demo: UART baseline'
   command: ./scripts/module3.sh --run
-  screenshot: assets/screenshots/ex01_uart_baseline.png
-  notes: 'Hands-on: module3/examples/uart_baseline/'
+  screenshot: assets/screenshots/ex01_examples/uart_baseline.png
+  notes: 'Hands-on: module3/examples/examples/uart_baseline/'
   expect_stdout_contains: UART baseline test PASS
 - type: section
   title: Practice & assessment
+- type: bullets
+  title: What you should know
+  bullets:
+  - Describe UART 8N1 frame and baud timing.
+  - Explain the role of uart_tx, uart_rx, and baud_gen.
+  - Run the uart_baseline example and interpret the loopback test.
+  - 'Ready for Module 4: UART UVM+SV verification.'
+  notes: From MODULE3 Learning Outcomes.
 - type: bullets
   title: Exercises
   bullets:
@@ -141,5 +216,5 @@ slides:
   - Understand the UART protocol (8N1, baud), translate it to RTL (TX, RX, baud gen),
     and verify with a **basic** (non-UVM) directed testbench.
   - Complete module3/CHECKLIST.md
-  - Run ./scripts/module3.sh --check
+  - Review module3/EXAMPLES.md and run each lab
   - 'Next: UART UVM+SV'

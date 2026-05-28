@@ -33,6 +33,78 @@ slides:
   - 'Module 1 establishes the **design and verification mindset** you will use for
     UART, SPI, and I²C in later modules:'
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - Read UNDERSTANDING_THE_SPEC.md — how to read interface, behavior, and timing in
+    a spec.
+  - Read SPEC_TO_RTL_GUIDE.md — mapping spec sections to RTL structure.
+  - Skim Design Architecture and Verification sections below, then run the spec_to_rtl
+    example.
+  - Trace one requirement in SPEC.md to a line in `dut/counter.v` and to a check in
+    `sim_main.cpp`.
+  notes: From docs/MODULE1.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 1: DUT / block hierarchy (see module1/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 1: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. Artifact flow (spec_to_rtl)
+  bullets:
+  - SPEC.md → requirements in plain language (interface, behavior, timing).
+  - dut/counter.v → synthesizable RTL implementing the spec.
+  - top.v → wrapper connecting DUT pins to the simulation harness.
+  - sim_main.cpp → clock, reset, stimulus, and result checking outside RTL.
+  notes: From MODULE1 Design Architecture.
+- type: bullets
+  title: 2. Counter DUT structure
+  bullets:
+  - '8-bit up-counter: increments when `enable` is high; holds when disabled.'
+  - 'Reset: synchronous active-low `rst_n` clears `count` to zero.'
+  - 'Ports: `clk`, `rst_n`, `enable`, `count[7:0]` — map directly from the spec interface
+    table.'
+  notes: From MODULE1 Design Architecture.
+- type: bullets
+  title: 3. Simulation harness attachment
+  bullets:
+  - C++ generates `clk` and drives `rst_n` / `enable`; reads `count` each cycle.
+  - No SystemVerilog testbench yet — you will add structured TB/UVM in Module 2.
+  notes: From MODULE1 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 1: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. What we verify in Module 1
+  bullets:
+  - RTL behavior matches SPEC.md (reset, enable gating, count progression).
+  - 'Directed scenario: release reset, enable for N cycles, expect `count == N`.'
+  notes: From MODULE1 Verification & Testing Methods.
+- type: bullets
+  title: 2. Stimulus and checking
+  bullets:
+  - 'Stimulus: C++ toggles `enable` for a known number of clock cycles.'
+  - 'Check: compare `count` to expected value; print PASS/FAIL.'
+  - 'Traceability: each check should cite the spec sentence it proves.'
+  notes: From MODULE1 Verification & Testing Methods.
+- type: bullets
+  title: 3. What is not covered yet
+  bullets:
+  - Random stimulus, functional coverage, scoreboards — Module 2 (UVM) and protocol
+    modules.
+  - Use [UNDERSTANDING_THE_SPEC.md](../module1/UNDERSTANDING_THE_SPEC.md) and [SPEC_TO_RTL_GUIDE.md](../module1/SPEC_TO_RTL_GUIDE.md)
+    while tracing the example.
+  notes: From MODULE1 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
   title: 1. Specification → RTL Design Flow
@@ -40,7 +112,7 @@ slides:
   - 'Specification: Document interface (ports, widths, direction), behavior (reset,
     enable, state transitions), and timing (sync/async).'
   - 'RTL: Implement the spec in Verilog/SystemVerilog; each requirement in the spec
-    should map to clear RTL (e.g., reset logic, enable...'
+    should map to clear RTL (e.g., reset logic, enable gating, counter width).'
   - 'Traceability: Being able to point from a line in the spec to the RTL that implements
     it (and vice versa).'
   notes: From MODULE1 Topics Covered.
@@ -59,9 +131,11 @@ slides:
   - 'What we verify: That the RTL matches the specification (correct function, reset,
     enable, boundaries like count wrap).'
   - 'Why we verify: Finding bugs in RTL is far cheaper than finding them in silicon
-    or in system integration; directed tests (and later UVM)...'
+    or in system integration; directed tests (and later UVM) give repeatable, automated
+    checks.'
   - 'Directed test: A simple test that drives specific inputs (e.g., reset, then 10
-    enabled cycles) and checks expected outputs (e.g., count...'
+    enabled cycles) and checks expected outputs (e.g., count == 10). The spec_to_rtl
+    example is a minimal directed test.'
   notes: From MODULE1 Topics Covered.
 - type: section
   title: Command reference highlights
@@ -84,24 +158,38 @@ slides:
   title: Hands-on examples
 - type: demo
   title: Module 1 self-check
-  command: ./scripts/module1.sh --check
+  command: ./scripts/module1.sh --help
   screenshot: assets/screenshots/module1_check.png
-  expect_stdout_contains: All required checks passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
+- type: code
+  title: Exercise scaffold
+  language: bash
+  source_file: scripts/module1.sh
+  code: ./scripts/module1.sh --scaffold
 - type: bullets
   title: 'Example 1: Spec-to-RTL example'
   bullets:
   - '[examples/spec_to_rtl/WALKTHROUGH.md](examples/spec_to_rtl/WALKTHROUGH.md) —
-    Section-by-section reading of SPEC.md and mapping to...'
-  notes: module1/examples/spec_to_rtl/README.md
+    Section-by-section reading of SPEC.md and mapping to dut/counter.v.'
+  notes: module1/examples/examples/spec_to_rtl/README.md
 - type: demo
   title: 'Demo: Spec-to-RTL example'
   command: cd module1/examples/spec_to_rtl && make run
-  screenshot: assets/screenshots/ex01_spec_to_rtl.png
-  notes: 'Hands-on: module1/examples/spec_to_rtl/'
+  screenshot: assets/screenshots/ex01_examples/spec_to_rtl.png
+  notes: 'Hands-on: module1/examples/examples/spec_to_rtl/'
   expect_stdout_contains: '[PASS] spec_to_rtl'
 - type: section
   title: Practice & assessment
+- type: bullets
+  title: What you should know
+  bullets:
+  - Describe the specification → RTL flow and why a written spec matters.
+  - Explain what we verify (RTL vs spec) and why (cost of bugs, repeatability).
+  - Run the spec_to_rtl example (make run) and relate SPEC.md, counter.v, and sim_main.cpp.
+  - 'Be ready for Module 2: basic testbench patterns and UVM+SV (agents, sequences,
+    drivers, monitors, scoreboards) and toolchain (Verilator, UVM_HOME, Make).'
+  notes: From MODULE1 Learning Outcomes.
 - type: bullets
   title: Exercises
   bullets:
@@ -122,5 +210,5 @@ slides:
   - Understand the specification → RTL design flow, design methodology, and why we
     verify.
   - Complete module1/CHECKLIST.md
-  - Run ./scripts/module1.sh --check
+  - Review module1/EXAMPLES.md and run each lab
   - 'Next: Design & Verification Methodology (Part 2)'

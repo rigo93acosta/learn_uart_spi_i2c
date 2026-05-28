@@ -1,0 +1,6 @@
+flowchart LR
+  SEQ["RegSequence"] --> DRV["RegDriver"]
+  DRV --> DUT["register"]
+  DUT --> MON["RegMonitor"]
+  MON --> SB["RegScoreboard"]
+  SB --> DONE["UVM test done"]

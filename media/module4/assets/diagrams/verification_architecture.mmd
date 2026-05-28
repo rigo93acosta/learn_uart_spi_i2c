@@ -1,0 +1,7 @@
+flowchart TB
+  SEQ["UartTxSequence"] --> DRV["UartTxDriver"]
+  DRV --> DUT["uart_tx / uart_rx"]
+  DUT --> MON["UartTxMonitor\nreconstruct from tx"]
+  MON --> SB["UartTxScoreboard"]
+  DUT -->|loopback rx_valid| SB
+  EXP["expected bytes"] --> SB

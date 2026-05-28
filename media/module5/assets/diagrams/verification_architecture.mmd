@@ -1,0 +1,5 @@
+flowchart LR
+  STIM["initial: start, data_in\n0x55, 0xAA"] --> M["spi_master"]
+  M --> WAIT["wait done"]
+  WAIT --> PASS["SPI baseline PASS"]
+  NOTE["Optional: VCD check\n8 SCLK edges, Mode 0"] -.-> PASS

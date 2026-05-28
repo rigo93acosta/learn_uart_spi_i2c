@@ -12,6 +12,15 @@
 
 ---
 
+## Before You Start (Learning Path)
+
+1. **Complete Module 1** — run `spec_to_rtl` and understand spec → RTL → directed check.
+2. **Read** this module’s Design Architecture and Verification sections before `uvm_smoke`.
+3. **Set UVM_HOME** (or use vendored UVM under `tools/`) — see Command Reference.
+4. **Run** `uvm_smoke` and trace one transaction from sequence → driver → DUT → monitor → scoreboard.
+
+---
+
 ## Running Module 2
 
 This module focuses on **verification methodology** and **toolchain** (no UART/SPI/I²C yet—those start in Module 3).
@@ -56,6 +65,47 @@ Module 2 builds on Module 1 (spec → RTL) by focusing on **how we verify**:
 - **Verilator** (5.036+)
 - **GNU Make** and **C++ compiler**
 - **UVM**: UVM_HOME set (must contain `src/uvm_pkg.sv`) or vendored UVM in the repo (see uvm_smoke Makefile)
+
+---
+
+## Design Architecture
+
+### 1. DUT and interface
+
+- **simple_register.v**: `enable`, `d`, `q` — minimal storage for learning UVM data flow.
+- **reg_if**: virtual interface bundling `clk`, `rst_n`, `enable`, `d`, `q` for the agent.
+
+### 2. UVM component hierarchy
+
+- **RegTransaction** → one write operation (data + enable + observed q).
+- **RegSequence** → stream of directed transactions.
+- **RegDriver** / **RegMonitor** → drive pins / sample pins each cycle.
+- **RegScoreboard** → expected queue vs observed.
+- **RegAgent**, **RegEnv**, **RegTest** — standard UVM layering used again in Modules 4, 6, 8.
+
+### 3. Build and simulation flow
+
+- Verilator compiles SV + UVM + C++; `+UVM_TESTNAME` selects the test.
+- Phases: build → connect → run (objections hold simulation until sequence completes).
+
+---
+
+## Verification & Testing Methods
+
+### 1. Transaction-level verification
+
+- Stimulus is a **transaction** (what to write), not raw pin wiggles in `initial` blocks.
+- The **monitor** reconstructs what happened on the bus; the **scoreboard** compares to expected.
+
+### 2. Directed regression in uvm_smoke
+
+- Fixed sequence: 0x00, 0x01, 0x55, 0xAA, 0xFF — repeatable, easy to debug.
+- Pass criteria: scoreboard reports matches, zero mismatches.
+
+### 3. Skills you reuse on UART/SPI/I²C
+
+- Same agent pattern; only the **transaction** and **protocol timing** in driver/monitor change.
+- Read UVM log lines: DRIVER, MONITOR, SCOREBOARD, final summary.
 
 ---
 

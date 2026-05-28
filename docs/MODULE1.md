@@ -12,6 +12,15 @@
 
 ---
 
+## Before You Start (Learning Path)
+
+1. **Read** [UNDERSTANDING_THE_SPEC.md](../module1/UNDERSTANDING_THE_SPEC.md) — how to read interface, behavior, and timing in a spec.
+2. **Read** [SPEC_TO_RTL_GUIDE.md](../module1/SPEC_TO_RTL_GUIDE.md) — mapping spec sections to RTL structure.
+3. **Skim** Design Architecture and Verification sections below, then run the **spec_to_rtl** example.
+4. **Trace** one requirement in SPEC.md to a line in `dut/counter.v` and to a check in `sim_main.cpp`.
+
+---
+
 ## Running Module 1
 
 This module focuses on **methodology** only (no UVM, no protocol-specific content).
@@ -60,6 +69,48 @@ Module 1 establishes the **design and verification mindset** you will use for UA
 - **C++ compiler** (GCC or Clang)
 
 UVM is **not** required for Module 1.
+
+---
+
+## Design Architecture
+
+### 1. Artifact flow (spec_to_rtl)
+
+- **SPEC.md** → requirements in plain language (interface, behavior, timing).
+- **dut/counter.v** → synthesizable RTL implementing the spec.
+- **top.v** → wrapper connecting DUT pins to the simulation harness.
+- **sim_main.cpp** → clock, reset, stimulus, and result checking outside RTL.
+
+### 2. Counter DUT structure
+
+- **8-bit up-counter**: increments when `enable` is high; holds when disabled.
+- **Reset**: synchronous active-low `rst_n` clears `count` to zero.
+- **Ports**: `clk`, `rst_n`, `enable`, `count[7:0]` — map directly from the spec interface table.
+
+### 3. Simulation harness attachment
+
+- C++ generates `clk` and drives `rst_n` / `enable`; reads `count` each cycle.
+- No SystemVerilog testbench yet — you will add structured TB/UVM in Module 2.
+
+---
+
+## Verification & Testing Methods
+
+### 1. What we verify in Module 1
+
+- RTL behavior matches **SPEC.md** (reset, enable gating, count progression).
+- Directed scenario: release reset, enable for N cycles, expect `count == N`.
+
+### 2. Stimulus and checking
+
+- **Stimulus**: C++ toggles `enable` for a known number of clock cycles.
+- **Check**: compare `count` to expected value; print PASS/FAIL.
+- **Traceability**: each check should cite the spec sentence it proves.
+
+### 3. What is not covered yet
+
+- Random stimulus, functional coverage, scoreboards — Module 2 (UVM) and protocol modules.
+- Use [UNDERSTANDING_THE_SPEC.md](../module1/UNDERSTANDING_THE_SPEC.md) and [SPEC_TO_RTL_GUIDE.md](../module1/SPEC_TO_RTL_GUIDE.md) while tracing the example.
 
 ---
 

@@ -1,0 +1,5 @@
+flowchart LR
+  SPEC["SPEC.md"] --> RTL["counter RTL"]
+  RTL --> SIM["sim_main.cpp\nstimulus"]
+  SIM --> CHK["count == expected"]
+  CHK --> PASS["PASS / FAIL"]

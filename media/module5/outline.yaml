@@ -13,10 +13,11 @@ slides:
   bullets:
   - 'SPI mode 0: SCLK idle low; capture on rising edge; change on falling edge; CS_N
     active low for frame.'
-  - 'Signals: sclk, mosi, cs_n; clk_div_tick for timing (no MISO in this baseline).'
-  - 'RTL architecture: spi_master (start, data_in → sclk, mosi, cs_n, done); clk_div
-    (divider → clk_div_tick).'
-  - 'Basic TB: Directed transfers (e.g. 0x55, 0xAA); wait for done; no UVM.'
+  - 'RTL block architecture: `clk_div` + `spi_master` hierarchy, FSM, and Mode 0 timing
+    on the wire.'
+  - 'Baseline verification: Directed stimulus, `done`-based checks, and optional waveform
+    review (8 SCLK edges, MSB first).'
+  - 'Path to Module 6: Same DUT, UVM agent with bus monitor on SCLK/MOSI/CS_N.'
 - type: bullets
   title: Prerequisites
   bullets:
@@ -32,6 +33,67 @@ slides:
   bullets:
   - 'Module 5 is the second **protocol** module (after UART):'
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - 'Read the detailed SPI learning guide: SPI_LEARNING_GUIDE.md — what SPI is, what
+    kind of protocol (serial, synchronous, master–slave), how it works (signals, modes
+    CPOL/CPHA, Mode 0, timing), and where it’s used.'
+  - 'Read the protocols + UVM overview: LEARNING_GUIDE_PROTOCOLS_AND_UVM.md — Part
+    B § 4. When to Use Baseline vs UVM (why we start with a baseline test before SPI
+    UVM in Module 6).'
+  notes: From docs/MODULE5.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 5: DUT / block hierarchy (see module5/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 5: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. Block hierarchy
+  bullets:
+  - top_spi_baseline → `clk_div` + `spi_master`; C++ supplies `clk`/`rst_n`.
+  notes: From MODULE5 Design Architecture.
+- type: bullets
+  title: 2. SPI master RTL
+  bullets:
+  - 'clk_div: `clk_div_tick` every `DIVIDER` clocks.'
+  - 'spi_master: Mode 0; `cs_n` frames; MSB-first on `mosi`; `done` when complete.'
+  - 'Outputs: `sclk` (idle low), `mosi`, `cs_n` — no `miso` in baseline.'
+  notes: From MODULE5 Design Architecture.
+- type: bullets
+  title: 3. Mode 0 timing on the wire
+  bullets:
+  - Capture on rising SCLK; change MOSI on falling SCLK; 8 edges per byte.
+  notes: From MODULE5 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 5: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. Baseline goals
+  bullets:
+  - Confirm Mode 0 serialization before SPI UVM (Module 6).
+  notes: From MODULE5 Verification & Testing Methods.
+- type: bullets
+  title: 2. Directed test flow
+  bullets:
+  - Pulse `start` + `data_in` (0x55, 0xAA); `wait(done)`; read `[PASS]` messages.
+  notes: From MODULE5 Verification & Testing Methods.
+- type: bullets
+  title: 3. Waveform learning (optional)
+  bullets:
+  - Count 8 SCLK cycles per frame; verify MSB-first bit order on MOSI.
+  - Defer MISO, multi-slave CS, and random data to Module 6.
+  notes: From MODULE5 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
   title: 1. SPI Protocol (Mode 0)
@@ -44,26 +106,24 @@ slides:
     divider (e.g. DIVIDER=8).'
   notes: From MODULE5 Topics Covered.
 - type: bullets
-  title: 2. RTL Architecture
+  title: 2. Hands-on testbench (spi_baseline)
   bullets:
-  - 'clk_div: Divides clk; outputs clk_div_tick one cycle every DIVIDER cycles.'
-  - 'spi_master: On start, loads data_in into shift register; asserts cs_n low; toggles
-    sclk on clk_div_tick; outputs one bit per half-cycle...'
-  notes: From MODULE5 Topics Covered.
-- type: bullets
-  title: 3. Basic Testbench
-  bullets:
-  - 'Directed test: Reset release; start=1, data_in=0x55; wait for done; repeat for
-    0xAA; $finish. Implemented in top_spi_baseline.sv...'
+  - 'Directed test in `top_spi_baseline.sv`: `start`, `data_in`, `wait(done)`.'
+  - 'Pass: `[PASS]` lines and `SPI baseline test PASS`.'
   notes: From MODULE5 Topics Covered.
 - type: section
   title: Hands-on examples
 - type: demo
   title: Module 5 self-check
-  command: ./scripts/module5.sh --check
+  command: ./scripts/module5.sh --help
   screenshot: assets/screenshots/module5_check.png
-  expect_stdout_contains: All required checks for Module 5 passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
+- type: code
+  title: Exercise scaffold
+  language: bash
+  source_file: scripts/module5.sh
+  code: ./scripts/module5.sh --scaffold
 - type: bullets
   title: 'Example 1: SPI baseline'
   bullets:
@@ -71,15 +131,23 @@ slides:
   - '`top_spi_baseline.sv`: Top with clk_div, spi_master; directed stimulus and checks
     in initial blocks.'
   - '`sim_main.cpp`: C++ harness (clock, reset); simulation runs until `$finish`.'
-  notes: module5/examples/spi_baseline/README.md
+  notes: module5/examples/examples/spi_baseline/README.md
 - type: demo
   title: 'Demo: SPI baseline'
   command: ./scripts/module5.sh --run
-  screenshot: assets/screenshots/ex01_spi_baseline.png
-  notes: 'Hands-on: module5/examples/spi_baseline/'
+  screenshot: assets/screenshots/ex01_examples/spi_baseline.png
+  notes: 'Hands-on: module5/examples/examples/spi_baseline/'
   expect_stdout_contains: SPI baseline test PASS
 - type: section
   title: Practice & assessment
+- type: bullets
+  title: What you should know
+  bullets:
+  - Describe SPI mode 0 and the role of sclk, mosi, cs_n, clk_div_tick.
+  - Explain the role of spi_master and clk_div.
+  - Run the spi_baseline example and interpret the directed test.
+  - 'Ready for Module 6: SPI UVM+SV verification.'
+  notes: From MODULE5 Learning Outcomes.
 - type: bullets
   title: Exercises
   bullets:
@@ -99,7 +167,7 @@ slides:
   title: Summary & next steps
   bullets:
   - Understand the SPI protocol (mode 0, signals), translate it to RTL (SPI master,
-    clk_div), and verify with a **basic** (non-UVM) directed...
+    clk_div), and verify with a **basic** (non-UVM) directed testbench.
   - Complete module5/CHECKLIST.md
-  - Run ./scripts/module5.sh --check
+  - Review module5/EXAMPLES.md and run each lab
   - 'Next: SPI UVM+SV'

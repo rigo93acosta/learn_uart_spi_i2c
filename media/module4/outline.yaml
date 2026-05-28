@@ -12,7 +12,7 @@ slides:
   title: Learning objectives
   bullets:
   - 'UART UVM agent: Transaction (UartTxTransaction), sequence (UartTxSequence), driver
-    (UartTxDriver), monitor (UartTxMonitor), scoreboard...'
+    (UartTxDriver), monitor (UartTxMonitor), scoreboard (UartTxScoreboard).'
   - 'Interface: uart_tx_if (clk, rst_n, start, data, tx, baud_tick) connects UVM to
     DUT.'
   - 'Loopback check: TX path (driver → DUT → monitor → scoreboard) and RX path (DUT
@@ -33,43 +33,98 @@ slides:
   bullets:
   - 'Module 4 builds on Module 3 (UART protocol + RTL + basic testbench):'
 - type: section
+  title: How to learn this module
+- type: bullets
+  title: Suggested learning path
+  bullets:
+  - 'Read the detailed UART learning guide: UART_LEARNING_GUIDE.md — what UART is,
+    how it works (frame, baud, TX/RX), and how it maps to our RTL.'
+  - 'Read the protocols + UVM overview: LEARNING_GUIDE_PROTOCOLS_AND_UVM.md — Part
+    B § 5. How UVM Maps to a Protocol and § 6. UART UVM Mapping (where UVM sits, how
+    transaction/driver/monitor/scoreboard map to UART).'
+  notes: From docs/MODULE4.md — read guides before running demos.
+- type: section
+  title: Design architecture
+- type: image
+  title: RTL / block architecture
+  image: assets/diagrams/rtl_architecture.png
+  caption: 'Module 4: DUT / block hierarchy (see module4/examples/).'
+- type: image
+  title: Verification environment architecture
+  image: assets/diagrams/verification_architecture.png
+  caption: 'Module 4: UVM layers, agents, and checkers for this phase.'
+- type: bullets
+  title: 1. UART DUT (reused from Module 3)
+  bullets:
+  - 'dut/: `uart_tx`, `uart_rx`, `baud_gen` — identical RTL to `uart_baseline`.'
+  - 'Loopback in top: `rx = tx` for closed-loop checking.'
+  - 'Why reuse: Upgrade verification (UVM) without touching proven RTL.'
+  notes: From MODULE4 Design Architecture.
+- type: bullets
+  title: 2. UVM testbench hierarchy
+  bullets:
+  - 'uart_tx_if: virtual interface for driver/monitor.'
+  - UartTxTransaction / Sequence / Driver / Monitor / Scoreboard / Agent / Env / Test
+    — same pattern as `uvm_smoke`.
+  - Monitor reconstructs bytes from the serial `tx` line using UART 8N1 rules.
+  notes: From MODULE4 Design Architecture.
+- type: bullets
+  title: 3. Dual check paths
+  bullets:
+  - 'TX path: sequence → driver → DUT → monitor → scoreboard (`observed_tx`).'
+  - 'RX path: loopback into `uart_rx`; `check_rx_byte()` when `data_valid` asserts.'
+  notes: From MODULE4 Design Architecture.
+- type: section
+  title: Verification & testing methods
+- type: image
+  title: Testing and closure flow
+  image: assets/diagrams/testing_methods.png
+  caption: 'Module 4: how tests, checks, and metrics close verification goals.'
+- type: bullets
+  title: 1. Directed UART regression
+  bullets:
+  - Sequence sends 0x00, 0x01, 0x55, 0xAA, 0xFF — repeatable regression before randomization.
+  notes: From MODULE4 Verification & Testing Methods.
+- type: bullets
+  title: 2. Scoreboard strategy
+  bullets:
+  - Expected queue loaded in test; compare to monitor-reconstructed TX and to RX hook
+    data.
+  - Fail fast on mismatch; read UVM SCOREBOARD summary at end of run.
+  notes: From MODULE4 Verification & Testing Methods.
+- type: bullets
+  title: 3. What to add next
+  bullets:
+  - Random baud, framing-error injection, coverage on `busy` / `data_valid`.
+  - See [LEARNING_GUIDE_PROTOCOLS_AND_UVM.md § 6](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#6-uart-uvm-mapping-module-4).
+  notes: From MODULE4 Verification & Testing Methods.
+- type: section
   title: Syllabus topics
 - type: bullets
-  title: 1. UART UVM Agent
+  title: 1. UART protocol recap (8N1)
   bullets:
-  - 'Transaction (UartTxTransaction): byte to send (data); monitor fills observed_tx
-    (reconstructed from serial line).'
-  - 'Sequence (UartTxSequence): produces directed transactions (0x00, 0x01, 0x55,
-    0xAA, 0xFF).'
-  - 'Driver (UartTxDriver): gets transaction, drives start and data for one cycle,
-    waits 10 baud_ticks (one frame).'
-  - 'Monitor (UartTxMonitor): watches tx line for start bit, samples 8 data bits per
-    baud_tick, writes transaction to scoreboard.'
-  - 'Scoreboard (UartTxScoreboard): compares expected (from test) vs observed_tx (from
-    monitor); also check_rx_byte for loopback RX.'
+  - One byte = start (0) + 8 data (LSB first) + stop (1); `baud_tick` times each bit.
+  - Driver/monitor must follow the same rules as the RTL.
   notes: From MODULE4 Topics Covered.
 - type: bullets
-  title: 2. Loopback and RX Check
+  title: 2. Toolchain
   bullets:
-  - 'Loopback: TX output (vif.tx) is connected to RX input (dut_rx.rx). Bytes sent
-    by driver are received by uart_rx.'
-  - 'RX hook: An initial block in the top looks up the scoreboard and calls check_rx_byte(rx_data)
-    when rx_valid is high, so both TX path...'
-  notes: From MODULE4 Topics Covered.
-- type: bullets
-  title: 3. Toolchain
-  bullets:
-  - 'Same as Module 2: Verilator with -sv, --timing, --trace, UVM include paths, make
-    SIM=verilator TEST=test_uart_uvm. Run with...'
+  - Verilator `-sv`, `--timing`, UVM includes; `make SIM=verilator TEST=test_uart_uvm`;
+    `+UVM_TESTNAME=UartTxTest`.
   notes: From MODULE4 Topics Covered.
 - type: section
   title: Hands-on examples
 - type: demo
   title: Module 4 self-check
-  command: ./scripts/module4.sh --check
+  command: ./scripts/module4.sh --help
   screenshot: assets/screenshots/module4_check.png
-  expect_stdout_contains: All required checks for Module 4 passed
+  expect_stdout_contains: Module
   notes: Run from course repository root.
+- type: code
+  title: Exercise scaffold
+  language: bash
+  source_file: scripts/module4.sh
+  code: ./scripts/module4.sh --scaffold
 - type: bullets
   title: 'Example 1: UART UVM'
   bullets:
@@ -77,15 +132,23 @@ slides:
   - 'TX and RX scoreboard checks (TX: monitor observes serial line; RX: loopback byte
     checked via scoreboard).'
   - Final scoreboard summary (TX/RX matches and mismatches).
-  notes: module4/examples/uart_uvm/README.md
+  notes: module4/examples/examples/uart_uvm/README.md
 - type: demo
   title: 'Demo: UART UVM'
   command: ./scripts/module4.sh --run
-  screenshot: assets/screenshots/ex01_uart_uvm.png
-  notes: 'Hands-on: module4/examples/uart_uvm/'
+  screenshot: assets/screenshots/ex01_examples/uart_uvm.png
+  notes: 'Hands-on: module4/examples/examples/uart_uvm/'
   expect_stdout_contains: SCOREBOARD
 - type: section
   title: Practice & assessment
+- type: bullets
+  title: What you should know
+  bullets:
+  - Describe the UART UVM agent (transaction, sequence, driver, monitor, scoreboard).
+  - Explain loopback (TX→RX) and how TX and RX are both checked in the scoreboard.
+  - Run the uart_uvm example and interpret UVM output.
+  - 'Ready for Module 5: SPI protocol + RTL + basic testbench.'
+  notes: From MODULE4 Learning Outcomes.
 - type: bullets
   title: Exercises
   bullets:
@@ -107,5 +170,5 @@ slides:
   - Extend UART verification to **UVM+SV** — UART agent (transaction, sequence, driver,
     monitor, scoreboard); run on Verilator.
   - Complete module4/CHECKLIST.md
-  - Run ./scripts/module4.sh --check
+  - Review module4/EXAMPLES.md and run each lab
   - 'Next: SPI'

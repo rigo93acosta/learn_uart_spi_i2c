@@ -1,0 +1,5 @@
+flowchart LR
+  STIM["addr + data"] --> MST["i2c_master"]
+  MST --> MON["inline bus monitor"]
+  MON --> CHK["compare bytes"]
+  CHK --> PASS["baseline PASS"]

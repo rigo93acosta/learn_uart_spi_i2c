@@ -23,6 +23,27 @@ done
 
 [[ -d "$SKILL_SCRIPTS" ]] || { echo "Skill not found: $SKILL_SCRIPTS" >&2; exit 1; }
 
+discover_modules() {
+  local mods=() f n
+  shopt -s nullglob
+  for f in "$COURSE_ROOT"/docs/MODULE*.md; do
+    n="$(basename "$f" .md)"
+    n="${n#MODULE}"
+    [[ "$n" =~ ^[0-9]+$ ]] || continue
+    mods+=("$n")
+  done
+  shopt -u nullglob
+  if [[ ${#mods[@]} -eq 0 ]]; then
+    for d in "$COURSE_ROOT"/media/module*/; do
+      [[ -d "$d" ]] || continue
+      n="$(basename "$d")"
+      n="${n#module}"
+      [[ "$n" =~ ^[0-9]+$ ]] && mods+=("$n")
+    done
+  fi
+  printf '%s\n' "${mods[@]}" | sort -n -u
+}
+
 should_run() {
   local n="$1"
   [[ -z "$MODULES_FILTER" ]] && return 0
@@ -35,14 +56,24 @@ should_run() {
 }
 
 fail=0
-for n in 1 2 3 4 5 6 7 8; do
+while IFS= read -r n; do
+  [[ -n "$n" ]] || continue
   should_run "$n" || continue
   media="$COURSE_ROOT/media/module$n"
+  [[ -d "$media" ]] || { echo "SKIP: no $media"; continue; }
   args=(--media-dir "$media" --course-root "$COURSE_ROOT")
   [[ $RUN_DEMOS -eq 1 ]] && args+=(--run-demos)
   if ! "$SKILL_SCRIPTS/run_python.sh" "$SKILL_SCRIPTS/verify_media.py" "${args[@]}"; then
     ((fail++)) || true
   fi
-done
+done < <(discover_modules)
 
-[[ $fail -eq 0 ]] && echo "All media checks passed." || { echo "$fail module(s) failed." >&2; exit 1; }
+if [[ $fail -eq 0 ]]; then
+  echo "All media checks passed."
+  SUMMARY_ARGS=("$COURSE_ROOT" --deliverables)
+  [[ -n "$MODULES_FILTER" ]] && SUMMARY_ARGS+=(--module "$MODULES_FILTER")
+  "$SKILL_SCRIPTS/run_python.sh" "$SKILL_SCRIPTS/print_slide_summary.py" "${SUMMARY_ARGS[@]}"
+else
+  echo "$fail module(s) failed." >&2
+  exit 1
+fi

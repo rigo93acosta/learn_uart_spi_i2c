@@ -62,24 +62,50 @@ Module 6 builds on Module 5 (SPI protocol + RTL + basic testbench):
 
 ---
 
+## Design Architecture
+
+### 1. SPI DUT (reused from Module 5)
+
+- **spi_master** + **clk_div** in `module6/examples/spi_uvm/dut/`.
+- **spi_master_if** connects UVM to DUT pins.
+
+### 2. UVM agent structure
+
+- **SpiTransaction** = one byte; **SpiSequence** = directed list; **SpiDriver** waits on `done`.
+- **SpiMonitor** samples MOSI on rising SCLK while `cs_n` is low (Mode 0, MSB first).
+- **SpiScoreboard** compares expected vs `observed_mosi`.
+
+### 3. Bus vs DUT checking
+
+- Monitor validates **wire behavior**; `done` alone is not sufficient for sign-off.
+
+---
+
+## Verification & Testing Methods
+
+### 1. Mode 0 in the testbench
+
+- Monitor must use rising-edge capture and falling-edge change — matches CPOL/CPHA=0.
+
+### 2. Directed regression
+
+- Same byte pattern as UART UVM (0x00 … 0xFF) for apples-to-apples learning.
+
+### 3. Extensions
+
+- MISO reads, random data, mode parameters — see [LEARNING_GUIDE § 7](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#7-spi-uvm-mapping-module-6).
+
+---
+
 ## Topics Covered
 
-### 1. SPI UVM Agent
+### 1. SPI protocol recap (Mode 0)
 
-- **Transaction** (SpiTransaction): byte to send (data); monitor fills observed_mosi (reconstructed from MOSI on SCLK).
-- **Sequence** (SpiSequence): produces directed transactions (0x00, 0x01, 0x55, 0xAA, 0xFF).
-- **Driver** (SpiDriver): gets transaction, drives start and data_in for one cycle, waits for done.
-- **Monitor** (SpiMonitor): watches cs_n; when cs_n goes low, samples MOSI on each rising edge of SCLK (mode 0, MSB first), writes transaction to scoreboard.
-- **Scoreboard** (SpiScoreboard): compares expected (from test) vs observed_mosi (from monitor).
+- `cs_n` frames; 8 SCLK cycles per byte; MSB first on MOSI.
 
-### 2. Mode 0 Timing
+### 2. Toolchain
 
-- **SPI mode 0**: SCLK idles low; data captured on rising edge; data changed on falling edge.
-- **Monitor**: Waits for cs_n low, then on 8 rising edges of SCLK captures MOSI into bits [7:0] (MSB first).
-
-### 3. Toolchain
-
-- Same as Module 2: Verilator with -sv, --timing, --trace, UVM include paths, make SIM=verilator TEST=test_spi_uvm. Run with +UVM_TESTNAME=SpiTest.
+- `make SIM=verilator TEST=test_spi_uvm`; `+UVM_TESTNAME=SpiTest`.
 
 ---
 

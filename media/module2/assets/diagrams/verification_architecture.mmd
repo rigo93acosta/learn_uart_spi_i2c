@@ -1,0 +1,7 @@
+flowchart LR
+  T["RegTransaction\n(data, enable)"] --> SEQ["Sequence\n0x00..0xFF"]
+  SEQ --> DRV["Driver\nwiggle enable, d"]
+  DRV --> DUT["DUT q"]
+  DUT --> MON["Monitor\nsample q"]
+  MON --> SB["Scoreboard\nexpected vs observed"]
+  EXP["Test expected queue"] --> SB

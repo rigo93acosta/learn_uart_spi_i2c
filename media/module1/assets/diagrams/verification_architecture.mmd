@@ -1,0 +1,4 @@
+flowchart LR
+  S["Directed stimulus\nreset, enable N cycles"] --> DUT["counter RTL"]
+  DUT --> C["Check count == N\n(PASS/FAIL in sim_main)"]
+  SPEC["SPEC.md"] -.->|traceability| C

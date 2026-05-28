@@ -1,0 +1,7 @@
+flowchart TB
+  subgraph dut["I²C DUT (Module 7)"]
+    DIV["clk_div"]
+    M["i2c_master"]
+    DIV --> M
+  end
+  IF["i2c_if"]

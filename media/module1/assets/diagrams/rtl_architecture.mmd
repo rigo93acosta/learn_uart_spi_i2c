@@ -1,0 +1,11 @@
+flowchart TB
+  subgraph tb["Testbench (C++)"]
+    SIM["sim_main.cpp\nclk, rst_n, enable"]
+  end
+  subgraph rtl["RTL (top.v)"]
+    DUT["dut/counter.v\n8-bit up-counter"]
+  end
+  SPEC["SPEC.md\nrequirements"]
+  SPEC -.->|implements| DUT
+  SIM -->|drives| DUT
+  DUT -->|count| SIM

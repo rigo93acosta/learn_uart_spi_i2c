@@ -1,0 +1,5 @@
+flowchart LR
+  SEQ["SpiSequence"] --> DRV["SpiDriver"]
+  DRV --> DUT["spi_master"]
+  DUT --> MON["Monitor SCLK/MOSI"]
+  MON --> SB["Scoreboard"]

@@ -1,0 +1,6 @@
+flowchart LR
+  STIM["start, addr, data_in"] --> DUT["i2c_master"]
+  DUT --> BUS["SCL / SDA"]
+  BUS --> MON["inline bus monitor\nsample SDA @ rising SCL"]
+  MON --> CHK["compare addr+W, data"]
+  CHK --> PASS["I2C baseline PASS"]

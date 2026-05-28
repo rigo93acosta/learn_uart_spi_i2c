@@ -62,19 +62,50 @@ Module 8 builds on Module 7 (I²C protocol + RTL + basic testbench):
 
 ---
 
+## Design Architecture
+
+### 1. I²C DUT (reused from Module 7)
+
+- **i2c_master** + **clk_div**; **i2c_if** for UVM connection.
+- Wire sequence: START → address+W → data → STOP.
+
+### 2. UVM agent
+
+- **I2cTransaction** holds `addr` + `data`; monitor fills `observed_*`.
+- **I2cMonitor** reimplements baseline bus sampling inside UVM.
+- **I2cScoreboard** checks address and data phases independently.
+
+### 3. Course capstone
+
+- Compare UART (async), SPI (SCLK+CS), I²C (shared bus) — same UVM skeleton, different monitors.
+
+---
+
+## Verification & Testing Methods
+
+### 1. Two-phase scoreboard
+
+- Separate checks for address+W byte and data byte — catches shifted or merged fields.
+
+### 2. Reuse baseline monitor logic
+
+- Module 7 inline monitor → Module 8 **I2cMonitor** for scalable tests.
+
+### 3. Extensions
+
+- ACK/NACK, reads, multi-master — [LEARNING_GUIDE § 8](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#8-i2c-uvm-mapping-module-8).
+
+---
+
 ## Topics Covered
 
-### 1. I²C UVM Agent
+### 1. I²C protocol recap
 
-- **Transaction** (I2cTransaction): address and data to write; monitor fills observed_addr/observed_data.
-- **Sequence** (I2cSequence): produces directed transactions (e.g. same addr, different data bytes).
-- **Driver** (I2cDriver): gets transaction, drives start/addr/data_in for one cycle, waits for done.
-- **Monitor** (I2cMonitor): watches SCL/SDA; after START, samples SDA on rising SCL to reconstruct 8 bits of address+W and 8 bits of data.
-- **Scoreboard** (I2cScoreboard): compares expected (from test) vs observed_addr/observed_data.
+- START/STOP on SCL high; MSB-first address and data on SDA.
 
 ### 2. Toolchain
 
-- Same as Module 6 (SPI UVM): Verilator with -sv, --timing, --trace, UVM include paths, `make SIM=verilator TEST=test_i2c_uvm`. Run with `+UVM_TESTNAME=test_i2c_uvm`.
+- `make SIM=verilator TEST=test_i2c_uvm`; `+UVM_TESTNAME=test_i2c_uvm`.
 
 ---
 
@@ -92,6 +123,15 @@ Run: `cd module8/examples/i2c_uvm && make SIM=verilator TEST=test_i2c_uvm`
 ## Where UVM Applies (Recap)
 
 UVM is used **only in the testbench** around the I²C DUT. The **transaction** is (address, data); the **driver** drives start/addr/data_in and waits for done; the **monitor** observes SCL/SDA, reconstructs address+data (sample SDA on rising SCL), and sends to the **scoreboard**. See [LEARNING_GUIDE_PROTOCOLS_AND_UVM.md § 8](LEARNING_GUIDE_PROTOCOLS_AND_UVM.md#8-i2c-uvm-mapping-module-8) for the full mapping.
+
+---
+
+## Learning Outcomes
+
+- Describe the I²C UVM agent and how **I2cMonitor** maps to SCL/SDA behavior.
+- Explain two-phase scoreboard checking (address vs data).
+- Run `i2c_uvm` and interpret UVM / scoreboard output.
+- Compare verification architecture across UART, SPI, and I²C modules in this course.
 
 ---
 

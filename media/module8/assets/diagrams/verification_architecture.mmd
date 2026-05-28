@@ -1,0 +1,5 @@
+flowchart TB
+  SEQ["I2cSequence\naddr + data"] --> DRV["I2cDriver"]
+  DRV --> DUT["i2c_master"]
+  DUT --> MON["I2cMonitor\nSTART + SCL/SDA sample"]
+  MON --> SB["I2cScoreboard\naddr and data phases"]

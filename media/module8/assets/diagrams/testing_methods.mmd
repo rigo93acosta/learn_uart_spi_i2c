@@ -1,0 +1,5 @@
+flowchart TB
+  SEQ["I2cSequence"] --> DRV["I2cDriver"]
+  DRV --> DUT["i2c_master"]
+  DUT --> MON["I2cMonitor"]
+  MON --> SB["addr + data\nscoreboard"]
